@@ -8,6 +8,6 @@
     <title>DemoIndex</title>
 </head>
 <body>
-    <h3 th:text=""></h3>
+    <h3 th:each="comment : ${listComment}" th:text="${comment.commentText}"></h3>
 </body>
 </html>
