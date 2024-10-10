@@ -17,7 +17,7 @@ public class QuestionType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, columnDefinition = "nvarchar(255)")
     private String typeName;
 
     @OneToMany(mappedBy = "questionType")

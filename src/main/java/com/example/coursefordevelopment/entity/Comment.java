@@ -18,6 +18,7 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "nvarchar(255)")
     private String commentText;
 
     private LocalDateTime createdAt = LocalDateTime.now();

@@ -24,6 +24,7 @@ public class Session {
     @OneToMany(mappedBy = "session")
     private List<Lesson> lessons;
 
+    @Column(columnDefinition = "nvarchar(100)")
     private String nameSessions;
 }
 

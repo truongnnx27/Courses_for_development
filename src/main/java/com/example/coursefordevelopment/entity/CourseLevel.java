@@ -17,7 +17,7 @@ public class CourseLevel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, columnDefinition = "nvarchar(100)")
     private String levelName;
 
     @OneToMany(mappedBy = "courseLevel")

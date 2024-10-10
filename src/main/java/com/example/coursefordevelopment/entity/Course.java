@@ -22,8 +22,10 @@ public class Course {
     @Column(nullable = false)
     private String title;
 
+    @Column(columnDefinition = "nvarchar(255)")
     private String description;
 
+    @Column(columnDefinition = "nvarchar(255)")
     private String category;
 
     private BigDecimal rating = BigDecimal.ZERO;

@@ -10,12 +10,12 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class QuestionDto {
+public class    QuestionDto {
     private Long id;
+    private String content;
+    private int points;
     private Long quizId;           // Map ID của Quiz
     private Long questionTypeId;    // Map ID của QuestionType
     private String questionText;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private List<Long> optionIds;   // Map ID của các Option
+    private List<OptionDto> options;
 }

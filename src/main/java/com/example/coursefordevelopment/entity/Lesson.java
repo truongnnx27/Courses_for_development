@@ -21,6 +21,7 @@ public class Lesson {
     @Column(nullable = false)
     private String title;
 
+    @Column(columnDefinition = "nvarchar(255)")
     private String content;
 
     private int duration;
@@ -41,5 +42,16 @@ public class Lesson {
     @ManyToOne
     @JoinColumn(name = "session_id")
     private Session session;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
 

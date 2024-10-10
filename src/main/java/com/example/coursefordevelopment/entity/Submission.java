@@ -26,6 +26,7 @@ public class Submission {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column(columnDefinition = "nvarchar(255)")
     private String submissionFileUrl;
     private LocalDateTime submittedAt = LocalDateTime.now();
     private BigDecimal grade;

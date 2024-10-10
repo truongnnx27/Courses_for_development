@@ -22,6 +22,7 @@ public class Assignment {
     @Column(nullable = false)
     private String title;
 
+    @Column(columnDefinition = "nvarchar(255)")
     private String description;
 
     private Date dueDate;

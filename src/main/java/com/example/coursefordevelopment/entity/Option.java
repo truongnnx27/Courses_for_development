@@ -18,6 +18,7 @@ public class Option {
     @JoinColumn(name = "question_id")
     private Question question;
 
+    @Column(columnDefinition = "nvarchar(255)")
     private String optionText;
     private boolean isCorrect;
 }

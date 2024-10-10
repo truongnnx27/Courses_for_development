@@ -26,11 +26,22 @@ public class Question {
     @JoinColumn(name = "question_type_id")
     private QuestionType questionType;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "nvarchar(500)")
     private String questionText;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "question")
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Option> options;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
