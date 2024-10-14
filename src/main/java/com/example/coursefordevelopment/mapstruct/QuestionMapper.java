@@ -15,14 +15,16 @@ import java.util.stream.Collectors;
 public interface QuestionMapper {
     QuestionMapper INSTANCE = Mappers.getMapper(QuestionMapper.class);
 
+    // Ánh xạ Question -> QuestionDto (bao gồm cả options)
     @Mapping(source = "quiz.id", target = "quizId")
     @Mapping(source = "questionType.id", target = "questionTypeId")
-    @Mapping(target = "options", ignore = false)  // Ánh xạ cả options
+    @Mapping(source = "options", target = "options") // Ánh xạ options
     QuestionDto questionToQuestionDto(Question question);
 
+    // Ánh xạ QuestionDto -> Question (bao gồm cả options)
     @Mapping(source = "quizId", target = "quiz.id")
     @Mapping(source = "questionTypeId", target = "questionType.id")
-    @Mapping(target = "options", ignore = false)  // Ánh xạ cả options
+    @Mapping(source = "options", target = "options") // Ánh xạ options
     Question questionDtoToQuestion(QuestionDto questionDto);
 
 

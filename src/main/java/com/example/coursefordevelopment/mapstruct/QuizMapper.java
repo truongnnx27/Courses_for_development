@@ -16,10 +16,14 @@ public interface QuizMapper {
 
     QuizMapper INSTANCE = Mappers.getMapper(QuizMapper.class);
 
+    // Ánh xạ Quiz -> QuizDto (bao gồm cả lessonId và danh sách câu hỏi)
     @Mapping(source = "lesson.id", target = "lessonId")
+    @Mapping(source = "questions", target = "questions") // Thêm ánh xạ cho questions
     QuizDto quizToQuizDto(Quiz quiz);
 
+    // Ánh xạ QuizDto -> Quiz (bao gồm cả lessonId và danh sách câu hỏi)
     @Mapping(source = "lessonId", target = "lesson.id")
+    @Mapping(source = "questions", target = "questions") // Thêm ánh xạ cho questions
     Quiz quizDtoToQuiz(QuizDto quizDto);
 
 }

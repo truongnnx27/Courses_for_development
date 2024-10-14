@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -41,87 +42,118 @@ public class QuizzService {
     QuestionTypeMapper questionTypeMapper= QuestionTypeMapper.INSTANCE;
 
     @Transactional
-    public QuizDto createQuiz(QuizDto quizDto) {
-        // 1. Kiểm tra Lesson tồn tại
+    public QuizDto createQuizz(QuizDto quizDto) {
+        // 1. Lưu Quiz trước
         Lesson lesson = lessonRepository.findById(quizDto.getLessonId())
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        // 2. Lưu Quiz với Lesson đã tìm được
         Quiz quiz = quizMapper.quizDtoToQuiz(quizDto);
-        quiz.setLesson(lesson);  // Gắn Lesson vào Quiz
-        quiz = quizRepository.save(quiz);  // Lưu Quiz và nhận lại đối tượng với ID
+        quiz.setLesson(lesson);
 
-        // 3. Kiểm tra và lưu các Question liên quan đến Quiz
-        if (quizDto.getQuestions() != null && !quizDto.getQuestions().isEmpty()) {  // Kiểm tra danh sách câu hỏi
-            for (QuestionDto questionDto : quizDto.getQuestions()) {
-                // 3.1 Kiểm tra QuestionType tồn tại
-                QuestionType questionType = questionTypeRepository.findById(questionDto.getQuestionTypeId())
-                        .orElseThrow(() -> new AppException(ErrorCode.QUESTION_TYPE_NOT_FOUND));
+        // Lưu quiz và flush để lấy ID ngay lập tức
+        Quiz createdQuiz = quizRepository.saveAndFlush(quiz);
 
-                // 3.2 Lưu Question với QuestionType và Quiz đã tìm được
-                Question question = questionMapper.questionDtoToQuestion(questionDto);
-                question.setQuiz(quiz);  // Gắn Quiz vào Question
-                question.setQuestionType(questionType);  // Gắn QuestionType vào Question
-                question = questionRepository.save(question);  // Lưu Question và nhận lại đối tượng với ID
+        // 2. Lưu các Question liên kết với Quiz
+        List<Question> savedQuestions = new ArrayList<>();
+        for (QuestionDto questionDto : quizDto.getQuestions()) {
+            // Lấy questionType cho từng câu hỏi
+            QuestionType questionType = questionTypeRepository.findById(questionDto.getQuestionTypeId())
+                    .orElseThrow(() -> new AppException(ErrorCode.LESSON_Type_NOT_FOUND));
 
-                // 4. Lưu các Option liên quan đến Question
-                if (questionDto.getOptions() != null && !questionDto.getOptions().isEmpty()) {
-                    for (OptionDto optionDto : questionDto.getOptions()) {
-                        Option option = optionMapper.optionDtoToOption(optionDto);
-                        option.setQuestion(question);  // Gắn Question đã lưu vào Option
-                        optionRepository.save(option);  // Lưu Option vào cơ sở dữ liệu
-                    }
-                }
+            // Chuyển đổi questionDto thành question entity
+            Question question = questionMapper.questionDtoToQuestion(questionDto);
+            question.setQuestionType(questionType);
+            question.setQuiz(createdQuiz);
+
+            // Lưu question
+            question = questionRepository.save(question);
+
+            // 3. Lưu các Option liên kết với Question
+            List<Option> options = new ArrayList<>();
+            for (OptionDto optionDTO : questionDto.getOptions()) {
+                Option option = optionMapper.optionDtoToOption(optionDTO);
+                option.setQuestion(question);
+                options.add(option);
             }
+
+
+            optionRepository.saveAll(options);
+
+            // Thêm question đã lưu vào danh sách savedQuestions
+            savedQuestions.add(question);
+
+            // In thông tin để kiểm tra (nếu cần)
+            System.out.println("Quiz ID: " + createdQuiz.getId());
+            System.out.println("Question ID: " + question.getId());
+            System.out.println("ID Option:"+options.get(0).getId());
         }
 
-        // Trả về Quiz đã lưu kèm theo các Question và Option
-        return quizMapper.quizToQuizDto(quiz);
+        // 4. Chuyển đổi quiz đã lưu thành quizDto để trả về
+        QuizDto savedQuizDto = quizMapper.quizToQuizDto(createdQuiz);
+        List<QuestionDto> questionDtos = new ArrayList<>();
+        for (Question savedQuestion : savedQuestions) {
+            QuestionDto questionDto = questionMapper.questionToQuestionDto(savedQuestion);
+
+            List<OptionDto> optionDtos = new ArrayList<>();
+            for (Option option : savedQuestion.getOptions()) {
+                optionDtos.add(optionMapper.optionToOptionDto(option));
+            }
+            questionDto.setOptions(optionDtos);
+
+            questionDtos.add(questionDto);
+        }
+        savedQuizDto.setQuestions(questionDtos);
+
+        return savedQuizDto;
     }
+
+
+
 
     @Transactional
     public QuizDto create(QuizDto quizDto) {
         // 1. Lưu Quiz trước
-        // Tìm lesson theo ID
         Lesson lesson = lessonRepository.findById(quizDto.getLessonId())
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        // Chuyển đổi quizDto thành quiz entity và gán lesson cho quiz
         Quiz quiz = quizMapper.quizDtoToQuiz(quizDto);
         quiz.setLesson(lesson);
 
-        // Lưu quiz và nhận lại quiz đã lưu (đã có ID)
+        // Lưu quiz và flush để lấy ID ngay lập tức
         Quiz createdQuiz = quizRepository.save(quiz);
 
         // 2. Lưu các Question liên kết với Quiz
         List<Question> savedQuestions = quizDto.getQuestions().stream()
                 .map(questionDto -> {
+                    // Lấy questionType cho từng câu hỏi
+                    QuestionType questionType = questionTypeRepository.findById(questionDto.getQuestionTypeId())
+                            .orElseThrow(() -> new AppException(ErrorCode.LESSON_Type_NOT_FOUND));
+
                     // Chuyển đổi questionDto thành question entity
                     Question question = questionMapper.questionDtoToQuestion(questionDto);
-                    question.setQuiz(createdQuiz);  // Gán quiz đã lưu cho question
+                    question.setQuestionType(questionType); // Gán questionType đã lưu cho question
+                    question.setQuiz(createdQuiz); // Gán quiz đã lưu cho question
 
-                    // Tìm loại câu hỏi (QuestionType)
-                    QuestionType questionType = questionTypeRepository.findById(questionDto.getQuestionTypeId())
-                            .orElseThrow(() -> new AppException(ErrorCode.QUESTION_TYPE_NOT_FOUND));
-                    question.setQuestionType(questionType);  // Gán loại câu hỏi
-
-                    // Lưu question và nhận lại question đã lưu (đã có ID)
+                    // Lưu question và flush để lấy ID ngay lập tức
                     Question savedQuestion = questionRepository.save(question);
 
                     // 3. Lưu các Option liên kết với Question
-                    List<Option> options =(questionDto.getOptions())
-                            .stream()
+                    List<Option> options = questionDto.getOptions().stream()
                             .map(optionDTO -> {
-                                // Chuyển đổi optionDTO thành option entity
                                 Option option = optionMapper.optionDtoToOption(optionDTO);
-                                option.setQuestion(savedQuestion);  // Gán question đã lưu cho option
+                                option.setQuestion(savedQuestion); // Gán question đã lưu cho option
                                 return option;
                             }).collect(Collectors.toList());
 
                     // Lưu các Option vào database
                     optionRepository.saveAll(options);
 
-                    return savedQuestion;  // Trả về question đã lưu
+                    System.out.println("Quiz ID: " + createdQuiz.getId());
+                    System.out.println("Question ID: " + savedQuestion.getId());
+
+
+                    return savedQuestion; // Trả về question đã lưu
+
                 }).collect(Collectors.toList());
 
         // 4. Chuyển đổi quiz đã lưu thành quizDto để trả về
@@ -132,8 +164,13 @@ public class QuizzService {
                         .collect(Collectors.toList())
         );
 
+
         return savedQuizDto;
     }
+
+
+
+
 
 
 

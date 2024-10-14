@@ -14,7 +14,6 @@ public class QuizDto {
     private Long id;
     private Long lessonId;         // Map ID của Lesson
     private String title;
-    private Integer totalPoint;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<QuestionDto> questions; // Map ID của các Question

@@ -11,8 +11,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class    QuestionDto {
-    private Long id;
-    private String content;
     private int points;
     private Long quizId;           // Map ID của Quiz
     private Long questionTypeId;    // Map ID của QuestionType
