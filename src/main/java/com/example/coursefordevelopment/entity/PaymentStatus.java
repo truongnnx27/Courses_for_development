@@ -21,6 +21,6 @@ public class PaymentStatus {
     private String statusName;
 
     @OneToMany(mappedBy = "paymentStatus")
-    private List<Payment> payments;
+    private List<CoursePayment> payments;
 }
 

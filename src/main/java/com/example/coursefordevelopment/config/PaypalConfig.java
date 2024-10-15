@@ -21,21 +21,8 @@ public class PaypalConfig {
     private String mode;
 
     @Bean
-    public Map<String, String> paypalSdkConfig(){
-        Map<String, String> sdkConfig = new HashMap<>();
-        sdkConfig.put("mode", mode);
-        return sdkConfig;
-    }
-
-    @Bean
-    public OAuthTokenCredential authTokenCredential(){
-        return new OAuthTokenCredential(clientId, clientSecret, paypalSdkConfig());
-    }
-
-    @Bean
-    public APIContext apiContext() throws PayPalRESTException{
-        APIContext apiContext = new APIContext(authTokenCredential().getAccessToken());
-        apiContext.setConfigurationMap(paypalSdkConfig());
+    public APIContext apiContext() {
+        APIContext apiContext = new APIContext(clientId, clientSecret, mode);
         return apiContext;
     }
 }
