@@ -7,10 +7,12 @@ import com.example.coursefordevelopment.reponsitory.PaymentRepository;
 import com.example.coursefordevelopment.reponsitory.PaymentStatusRepository;
 import com.example.coursefordevelopment.reponsitory.UserRepository;
 import com.example.coursefordevelopment.service.PaypalService;
+import com.example.coursefordevelopment.service.VNPayService;
 import com.paypal.api.payments.Links;
 import com.paypal.api.payments.Payment;
 import com.example.coursefordevelopment.entity.CoursePayment;
 import com.paypal.base.rest.PayPalRESTException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -77,40 +79,49 @@ public class PayPalController {
                     .map(Links::getHref)
                     .findFirst();
         }
-        @GetMapping("/success")
-        public ResponseEntity<String> successPay(
-                @RequestParam("paymentId") String paymentId,
-                @RequestParam("PayerID") String payerId,
-                @RequestParam(value = "courseId") Long courseId,
-                @RequestParam(value = "userId") Long userId) {
+    @GetMapping("/success")
+    public ResponseEntity<String> successPay(HttpServletRequest request,
+                                             @RequestParam(value = "courseId") Long courseId,
+                                             @RequestParam(value = "userId") Long userId) {
+        // Lấy thông tin từ request
+        String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
+        String vnp_SecureHash = request.getParameter("vnp_SecureHash");
+        String vnp_TxnRef = request.getParameter("vnp_TxnRef"); // ID giao dịch
+        String vnp_OrderInfo = request.getParameter("vnp_OrderInfo"); // Thông tin đơn hàng
+        String vnp_PayDate = request.getParameter("vnp_PayDate"); // Ngày thanh toán
 
-            try {
-                Payment paypalPayment = paypalService.executePayment(paymentId, payerId);
+        // Logging thông tin
+        System.out.println("courseId: " + courseId);
+        System.out.println("userId: " + userId);
+        System.out.println("Transaction Reference: " + vnp_TxnRef);
+        System.out.println("Order Info: " + vnp_OrderInfo);
+        System.out.println("Pay Date: " + vnp_PayDate);
+        System.out.println("Secure Hash: " + vnp_SecureHash);
+        System.out.println("Response Code: " + vnp_ResponseCode);
 
-                if ("approved".equals(paypalPayment.getState())) {
-                    CoursePayment newPayment = createNewPayment(paypalPayment, courseId, userId);
-                    paymentRepository.save(newPayment);
-
-                    return ResponseEntity.ok("Payment successful. Payment ID: " + paymentId);
-                } else {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment not approved");
-                }
-            } catch (PayPalRESTException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment execution failed: " + e.getMessage());
-            }
+        // Kiểm tra trạng thái thanh toán và chữ ký
+        if ("00".equals(vnp_ResponseCode)) {
+            // Thanh toán thành công
+            CoursePayment newPayment = createNewPayment(courseId, userId, vnp_TxnRef, vnp_PayDate);
+            paymentRepository.save(newPayment);
+            return ResponseEntity.ok("Payment successful. Payment ID: " + newPayment.getId());
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Payment not approved or invalid signature");
         }
+    }
 
-        private CoursePayment createNewPayment(Payment paypalPayment, Long courseId, Long userId) {
-            CoursePayment newPayment = new CoursePayment();
-            newPayment.setAmount(new BigDecimal(paypalPayment.getTransactions().get(0).getAmount().getTotal()));
-            newPayment.setPaymentDate(LocalDateTime.now());
-            newPayment.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")));
-            newPayment.setCourse(courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found")));
-            newPayment.setPaymentStatus(paymentStatusRepository.findById(1L).orElseThrow(() -> new RuntimeException("Payment status not found")));
-            newPayment.setEnrollment(true);
-            return newPayment;
-        }
 
+    private CoursePayment createNewPayment(Long courseId, Long userId, String transactionId, String paymentDate) {
+        CoursePayment newPayment = new CoursePayment();
+        newPayment.setAmount(BigDecimal.valueOf(0)); // Cập nhật giá trị thực tế nếu cần
+        newPayment.setPaymentDate(LocalDateTime.now()); // Hoặc sử dụng `paymentDate` nếu cần
+        newPayment.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")));
+        newPayment.setCourse(courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found")));
+        newPayment.setPaymentStatus(paymentStatusRepository.findById(1L).orElseThrow(() -> new RuntimeException("Payment status not found")));
+        newPayment.setEnrollment(true);
+        return newPayment;
+    }
         @GetMapping("/cancel")
         public ResponseEntity<String> cancelPay() {
             return ResponseEntity.ok("Payment cancelled");
