@@ -19,10 +19,6 @@ import java.util.Enumeration;
 @RestController
 @RequestMapping("/api/payments/vnpay")
 public class VNPayController {
-
-    // Conversion rate from VND to USD (example rate)
-    private static final double VND_TO_USD_CONVERSION_RATE = 23000.0; // Update this rate as needed
-
     @Autowired
     private VNPayService vnPayService;
 
@@ -52,10 +48,6 @@ public class VNPayController {
             String cancelUrl = "http://localhost:8081/api/payments/vnpay/cancel";
             String successUrl = buildSuccessUrl(courseId, userId);
 
-            // Convert amount to USD
-            BigDecimal amountInUSD = BigDecimal.valueOf(amount / VND_TO_USD_CONVERSION_RATE);
-
-            // Tạo đơn hàng với amount in USD
             String paymentUrl = vnPayService.createOrder(amount, "Order description", successUrl);
 
             return ResponseEntity.ok("Payment created successfully. Please complete your payment at: " + paymentUrl);
@@ -89,10 +81,9 @@ public class VNPayController {
 
         // Kiểm tra trạng thái thanh toán
         if ("00".equals(vnp_ResponseCode)) {
-            // Convert the amount received in the request (VND) to USD
-            BigDecimal amountInUSD = BigDecimal.valueOf(Long.parseLong(vnp_Amount.trim()) / VND_TO_USD_CONVERSION_RATE);
+            BigDecimal amountInVND = BigDecimal.valueOf(Long.parseLong(vnp_Amount.trim()) / 100); // Convert VND amount to BigDecimal
 
-            CoursePayment newPayment = createNewPayment(courseId, userId, vnp_TxnRef, vnp_PayDate, amountInUSD);
+            CoursePayment newPayment = createNewPayment(courseId, userId, vnp_TxnRef, vnp_PayDate, amountInVND);
             paymentRepository.save(newPayment);
             return ResponseEntity.ok("Payment successful. Payment ID: " + newPayment.getId());
         } else {
@@ -100,9 +91,9 @@ public class VNPayController {
         }
     }
 
-    private CoursePayment createNewPayment(Long courseId, Long userId, String txnRef, String payDate, BigDecimal amountInUSD) {
+    private CoursePayment createNewPayment(Long courseId, Long userId, String txnRef, String payDate, BigDecimal amountInVND) {
         CoursePayment newPayment = new CoursePayment();
-        newPayment.setAmount(amountInUSD); // Set the converted amount
+        newPayment.setAmount(amountInVND); // Set the amount in VND
         newPayment.setPaymentDate(LocalDateTime.now());
         newPayment.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")));
         newPayment.setCourse(courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found")));
