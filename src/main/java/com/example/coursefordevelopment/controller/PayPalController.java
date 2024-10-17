@@ -68,12 +68,82 @@ public class PayPalController {
                     cancelUrl,
                     successUrl);
 
+            CoursePayment newPayment = createNewPayment(payment, courseId, userId, amount);
+            paymentRepository.save(newPayment); // Lưu vào cơ sở dữ liệu
+
+            // Lưu trạng thái thanh toán là "PENDING" (ID 0)
+            updatePaymentStatus(payment.getId(), 1L); // ID 0 cho PENDING
+
             return findApprovalLink(payment)
                     .map(link -> ResponseEntity.ok("Payment created successfully. Please complete your payment at: " + link))
                     .orElse(ResponseEntity.badRequest().body("Payment link not found."));
         } catch (PayPalRESTException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during payment creation: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/success")
+    public ResponseEntity<String> successPay(
+            @RequestParam("paymentId") String paymentId,
+            @RequestParam("PayerID") String payerId,
+            @RequestParam(value = "courseId") Long courseId,
+            @RequestParam(value = "userId") Long userId,
+            @RequestParam(value = "amount") Double amount) {
+
+        try {
+            Payment paypalPayment = paypalService.executePayment(paymentId, payerId);
+
+            if ("approved".equals(paypalPayment.getState())) {
+                // Cập nhật trạng thái thanh toán thành COMPLETED (ID 1)
+                updatePaymentStatus(paymentId, 2L); // ID 1 cho COMPLETED
+                return ResponseEntity.ok("Payment successful. Payment ID: " + paymentId);
+            } else {
+                // Cập nhật trạng thái thanh toán thành FAILED (ID 2)
+                updatePaymentStatus(paymentId, 3L); // ID 2 cho FAILED
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment not approved");
+            }
+        } catch (PayPalRESTException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment execution failed: " + e.getMessage());
+        }
+    }
+
+    private CoursePayment createNewPayment(Payment paypalPayment, Long courseId, Long userId, Double amount) {
+        CoursePayment newPayment = new CoursePayment();
+
+        // Lưu ID thanh toán từ PayPal
+        newPayment.setPaymentId(paypalPayment.getId());
+
+        // Lưu amount vào database (VND)
+        newPayment.setAmount(new BigDecimal(amount)); // Lưu vào database là VND
+        newPayment.setPaymentDate(LocalDateTime.now());
+        newPayment.setUser(userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found")));
+        newPayment.setCourse(courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found")));
+        newPayment.setPaymentStatus(paymentStatusRepository.findById(1L) // ID 1 cho PENDING
+                .orElseThrow(() -> new RuntimeException("Payment status not found")));
+        newPayment.setEnrollment(true);
+        return newPayment;
+    }
+
+
+    private void updatePaymentStatus(String paymentId, long statusId) {
+        // Tìm Payment bằng paymentId
+        Optional<CoursePayment> paymentOptional = paymentRepository.findByPaymentId(paymentId);
+        if (paymentOptional.isPresent()) {
+            CoursePayment payment = paymentOptional.get();
+            // Cập nhật trạng thái thanh toán
+            payment.setPaymentStatus(paymentStatusRepository.findById(statusId)
+                    .orElseThrow(() -> new RuntimeException("Payment status not found")));
+            paymentRepository.save(payment); // Lưu thay đổi vào cơ sở dữ liệu
+        } else {
+            throw new RuntimeException("Payment not found for paymentId: " + paymentId);
+        }
+    }
+
+    @GetMapping("/cancel")
+    public ResponseEntity<String> cancelPay() {
+        return ResponseEntity.ok("Payment cancelled");
     }
 
     private String buildSuccessUrl(Long courseId, Long userId, Double amount) {
@@ -85,52 +155,5 @@ public class PayPalController {
                 .filter(link -> "approval_url".equals(link.getRel()))
                 .map(Links::getHref)
                 .findFirst();
-    }
-
-    @GetMapping("/success")
-    public ResponseEntity<String> successPay(
-            @RequestParam("paymentId") String paymentId,
-            @RequestParam("PayerID") String payerId,
-            @RequestParam(value = "courseId") Long courseId,
-            @RequestParam(value = "userId") Long userId,
-            @RequestParam(value = "amount") Double amount) { // Nhận tham số amount
-
-        try {
-            Payment paypalPayment = paypalService.executePayment(paymentId, payerId);
-
-            if ("approved".equals(paypalPayment.getState())) {
-                CoursePayment newPayment = createNewPayment(paypalPayment, courseId, userId, amount); // Gửi amount vào phương thức này
-                paymentRepository.save(newPayment);
-
-                return ResponseEntity.ok("Payment successful. Payment ID: " + paymentId);
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment not approved");
-            }
-        } catch (PayPalRESTException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment execution failed: " + e.getMessage());
-        }
-    }
-
-    private CoursePayment createNewPayment(Payment paypalPayment, Long courseId, Long userId, Double amount) {
-        CoursePayment newPayment = new CoursePayment();
-
-        // Chuyển đổi amount từ USD sang VND
-        double amountVND = amount;
-
-        newPayment.setAmount(new BigDecimal(amountVND)); // Lưu vào database là VND
-        newPayment.setPaymentDate(LocalDateTime.now());
-        newPayment.setUser(userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found")));
-        newPayment.setCourse(courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found")));
-        newPayment.setPaymentStatus(paymentStatusRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Payment status not found")));
-        newPayment.setEnrollment(true);
-        return newPayment;
-    }
-
-    @GetMapping("/cancel")
-    public ResponseEntity<String> cancelPay() {
-        return ResponseEntity.ok("Payment cancelled");
     }
 }

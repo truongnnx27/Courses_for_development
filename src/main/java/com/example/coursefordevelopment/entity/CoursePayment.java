@@ -16,7 +16,7 @@ public class CoursePayment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private String paymentId;
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;

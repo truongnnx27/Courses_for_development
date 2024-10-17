@@ -48,7 +48,21 @@ public class VNPayController {
             String cancelUrl = "http://localhost:8081/api/payments/vnpay/cancel";
             String successUrl = buildSuccessUrl(courseId, userId);
 
-            String paymentUrl = vnPayService.createOrder(amount, "Order description", successUrl);
+            // Create VNPay order
+            String paymentUrl = vnPayService.createOrder(amount, successUrl, cancelUrl);
+
+            // Create new payment record in the database with PENDING status
+            CoursePayment newPayment = new CoursePayment();
+            newPayment.setAmount(BigDecimal.valueOf(amount)); // Save amount
+            newPayment.setPaymentDate(LocalDateTime.now());
+            newPayment.setUser(userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found")));
+            newPayment.setCourse(courseRepository.findById(courseId)
+                    .orElseThrow(() -> new RuntimeException("Course not found")));
+            newPayment.setPaymentStatus(paymentStatusRepository.findById(1L) // ID 1 for PENDING
+                    .orElseThrow(() -> new RuntimeException("Payment status not found")));
+            newPayment.setEnrollment(true);
+            paymentRepository.save(newPayment); // Save to database
 
             return ResponseEntity.ok("Payment created successfully. Please complete your payment at: " + paymentUrl);
         } catch (Exception e) {
@@ -62,53 +76,63 @@ public class VNPayController {
 
     @GetMapping("/success")
     public ResponseEntity<String> successPay(HttpServletRequest request,
+                                             @RequestParam(value = "vnp_TransactionNo") String transactionNo,
                                              @RequestParam(value = "courseId") Long courseId,
                                              @RequestParam(value = "userId") Long userId) {
-        // Lấy thông tin từ request
-        String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
-        String vnp_SecureHash = request.getParameter("vnp_SecureHash");
-        String vnp_TxnRef = request.getParameter("vnp_TxnRef");
-        String vnp_OrderInfo = request.getParameter("vnp_OrderInfo");
-        String vnp_PayDate = request.getParameter("vnp_PayDate");
-        String vnp_Amount = request.getParameter("vnp_Amount"); // Retrieve the amount from request
+        // Check transactionNo
+        if (transactionNo == null) {
+            return ResponseEntity.badRequest().body("Transaction number must be provided.");
+        }
 
-        // Ghi lại toàn bộ thông tin từ request
+        // Log transactionNo for debugging
+        System.out.println("Received transaction number: " + transactionNo);
+
+        // Retrieve parameters from request
+        String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
+        String vnp_Amount = request.getParameter("vnp_Amount");
+
+        // Log all parameters from request for debugging
+        logRequestParameters(request);
+
+        // Find payment transaction by transactionNo
+        CoursePayment existingPayment = paymentRepository.findByPaymentId(transactionNo)
+                .orElseThrow(() -> new RuntimeException("Payment not found for transactionNo: " + transactionNo));
+
+        // Log the retrieved payment for verification
+        System.out.println("Found payment: " + existingPayment);
+
+        // Check payment status
+        if ("00".equals(vnp_ResponseCode)) {
+            BigDecimal amountInVND = BigDecimal.valueOf(Long.parseLong(vnp_Amount.trim()));
+            existingPayment.setPaymentDate(LocalDateTime.now());
+            existingPayment.setAmount(amountInVND); // Update amount
+            existingPayment.setPaymentStatus(paymentStatusRepository.findById(2L) // ID 2 for COMPLETED
+                    .orElseThrow(() -> new RuntimeException("Payment status not found")));
+            paymentRepository.save(existingPayment); // Save changes to database
+            return ResponseEntity.ok("Payment successful. Payment ID: " + existingPayment.getId());
+        } else {
+            // Update payment status to FAILED
+            existingPayment.setPaymentStatus(paymentStatusRepository.findById(3L) // ID 3 for FAILED
+                    .orElseThrow(() -> new RuntimeException("Payment status not found")));
+            paymentRepository.save(existingPayment); // Save changes to database
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment not approved. Response code: " + vnp_ResponseCode);
+        }
+    }
+    @GetMapping("/cancel")
+    public ResponseEntity<String> cancelPay() {
+        return ResponseEntity.ok("Payment cancelled");
+    }
+
+    @GetMapping("/return")
+    public ResponseEntity<String> returnPay() {
+        return ResponseEntity.ok("Payment return success.");
+    }
+
+    private void logRequestParameters(HttpServletRequest request) {
         Enumeration<String> parameterNames = request.getParameterNames();
         while (parameterNames.hasMoreElements()) {
             String paramName = parameterNames.nextElement();
             System.out.println(paramName + ": " + request.getParameter(paramName));
         }
-
-        // Kiểm tra trạng thái thanh toán
-        if ("00".equals(vnp_ResponseCode)) {
-            BigDecimal amountInVND = BigDecimal.valueOf(Long.parseLong(vnp_Amount.trim()) / 100); // Convert VND amount to BigDecimal
-
-            CoursePayment newPayment = createNewPayment(courseId, userId, vnp_TxnRef, vnp_PayDate, amountInVND);
-            paymentRepository.save(newPayment);
-            return ResponseEntity.ok("Payment successful. Payment ID: " + newPayment.getId());
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment not approved. Response code: " + vnp_ResponseCode);
-        }
-    }
-
-    private CoursePayment createNewPayment(Long courseId, Long userId, String txnRef, String payDate, BigDecimal amountInVND) {
-        CoursePayment newPayment = new CoursePayment();
-        newPayment.setAmount(amountInVND); // Set the amount in VND
-        newPayment.setPaymentDate(LocalDateTime.now());
-        newPayment.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")));
-        newPayment.setCourse(courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found")));
-        newPayment.setPaymentStatus(paymentStatusRepository.findById(1L).orElseThrow(() -> new RuntimeException("Payment status not found"))); // Giả sử 1 là ID cho trạng thái thanh toán thành công
-        newPayment.setEnrollment(true);
-        return newPayment;
-    }
-
-    private boolean validateSignature(String secureHash, String data) {
-        // Implement logic to validate the VNPay signature here
-        return true; // Replace with actual validation logic
-    }
-
-    @GetMapping("/cancel")
-    public ResponseEntity<String> cancelPay() {
-        return ResponseEntity.ok("Payment cancelled");
     }
 }
