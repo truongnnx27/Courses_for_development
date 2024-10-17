@@ -8,6 +8,7 @@ public enum ErrorCode {
     INVALID_KEY(1003,"Title invalid"),
     QUIZ_NOT_FOUND(1004,"Quiz not found"),
     QUESTION_TYPE_NOT_FOUND(1005, "Question type not found"),
+    SUCESSFULLY(9999,"Sucessfully")
 
     ;
 
