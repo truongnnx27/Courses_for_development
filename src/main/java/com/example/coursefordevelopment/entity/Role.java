@@ -23,4 +23,8 @@ public class Role {
 
     @OneToMany(mappedBy = "role")
     private List<User> users;
+    @Override
+    public String toString() {
+        return "Role{id=" + id + ", roleName='" + roleName + "'}"; // Chỉ hiển thị những thông tin cần thiết
+    }
 }

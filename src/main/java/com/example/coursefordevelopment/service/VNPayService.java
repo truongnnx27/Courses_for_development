@@ -1,6 +1,5 @@
 package com.example.coursefordevelopment.service;
 
-
 import com.example.coursefordevelopment.config.VNPayConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
@@ -14,6 +13,8 @@ import java.util.*;
 @Service
 public class VNPayService {
 
+    private String transactionId; // Biến để lưu transaction ID
+
     public String createOrder(int total, String orderInfo, String urlReturn) {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
@@ -21,6 +22,9 @@ public class VNPayService {
         String vnp_IpAddr = "127.0.0.1"; // Thay thế bằng địa chỉ IP thực tế
         String vnp_TmnCode = VNPayConfig.vnp_TmnCode;
         String orderType = "order-type";
+
+        // Lưu mã giao dịch vào biến transactionId
+        this.transactionId = vnp_TxnRef;
 
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
@@ -73,8 +77,11 @@ public class VNPayService {
 
         String vnp_SecureHash = VNPayConfig.hmacSHA512(VNPayConfig.vnp_HashSecret, hashData.toString());
         query.append("&vnp_SecureHash=").append(vnp_SecureHash);
-        String paymentUrl = VNPayConfig.vnp_PayUrl + "?" + query.toString();
-        return paymentUrl;
+        return VNPayConfig.vnp_PayUrl + "?" + query.toString(); // Trả về URL thanh toán
+    }
+
+    public String getTransactionId() {
+        return transactionId; // Trả về transaction ID đã lưu
     }
 
     public int orderReturn(HttpServletRequest request) {
@@ -87,6 +94,9 @@ public class VNPayService {
             }
         }
 
+        // Ghi lại các tham số nhận được từ VNPay để gỡ lỗi
+        logRequestParameters(fields);
+
         String vnp_SecureHash = request.getParameter("vnp_SecureHash");
         if (vnp_SecureHash == null) {
             return -1; // Không có chữ ký
@@ -98,15 +108,25 @@ public class VNPayService {
         // Kiểm tra chữ ký
         String signValue = VNPayConfig.hashAllFields(fields);
 
-        if (vnp_SecureHash.equals(signValue)) {
-            String vnpResponseCode = request.getParameter("vnp_ResponseCode");
-            if ("00".equals(vnpResponseCode)) {
-                return 1; // Thanh toán thành công
-            } else {
-                return 0; // Thanh toán thất bại
-            }
-        } else {
+        if (!vnp_SecureHash.equals(signValue)) {
             return -1; // Chữ ký không hợp lệ
+        }
+
+        // Lấy mã phản hồi
+        String vnpResponseCode = request.getParameter("vnp_ResponseCode");
+        if (vnpResponseCode == null) {
+            return -1; // Không có mã phản hồi
+        } else if ("00".equals(vnpResponseCode)) {
+            return 1; // Thanh toán thành công
+        } else {
+            return 0; // Thanh toán thất bại
+        }
+    }
+
+    private void logRequestParameters(Map<String, String> fields) {
+        System.out.println("Request parameters from VNPay:");
+        for (Map.Entry<String, String> entry : fields.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
         }
     }
 }
