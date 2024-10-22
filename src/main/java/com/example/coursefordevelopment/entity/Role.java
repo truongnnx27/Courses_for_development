@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -22,5 +23,6 @@ public class Role {
     private String roleName;
 
     @OneToMany(mappedBy = "role")
+    @ToString.Exclude
     private List<User> users;
 }

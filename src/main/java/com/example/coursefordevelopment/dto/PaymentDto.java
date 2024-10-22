@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentDto {
-    private Long id;
     private Long courseId;  // Map chỉ ID của Course
     private Long userId;    // Map chỉ ID của User
     private BigDecimal amount;

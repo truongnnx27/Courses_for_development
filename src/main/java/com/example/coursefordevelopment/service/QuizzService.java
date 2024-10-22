@@ -41,71 +41,51 @@ public class QuizzService {
     OptionMapper optionMapper= OptionMapper.INSTANCE;
     QuestionTypeMapper questionTypeMapper= QuestionTypeMapper.INSTANCE;
 
-//    @Transactional
-//    public QuizDto createQuizz(QuizDto quizDto) {
-//        // 1. Lưu Quiz trước
-//        Lesson lesson = lessonRepository.findById(quizDto.getLessonId())
-//                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
-//
-//        Quiz quiz = quizMapper.quizDtoToQuiz(quizDto);
-//        quiz.setLesson(lesson);
-//
-//        // Lưu quiz và flush để lấy ID ngay lập tức
-//        Quiz createdQuiz = quizRepository.saveAndFlush(quiz);
-//
-//        // 2. Lưu các Question liên kết với Quiz
-//        List<Question> savedQuestions = new ArrayList<>();
-//        for (QuestionDto questionDto : quizDto.getQuestions()) {
-//            // Lấy questionType cho từng câu hỏi
-//            QuestionType questionType = questionTypeRepository.findById(questionDto.getQuestionTypeId())
-//                    .orElseThrow(() -> new AppException(ErrorCode.LESSON_Type_NOT_FOUND));
-//
-//            // Chuyển đổi questionDto thành question entity
-//            Question question = questionMapper.questionDtoToQuestion(questionDto);
-//            question.setQuestionType(questionType);
-//            question.setQuiz(createdQuiz);
-//
-//            // Lưu question
-//            question = questionRepository.save(question);
-//
-//            // 3. Lưu các Option liên kết với Question
-//            List<Option> options = new ArrayList<>();
-//            for (OptionDto optionDTO : questionDto.getOptions()) {
-//                Option option = optionMapper.optionDtoToOption(optionDTO);
-//                option.setQuestion(question);
-//                options.add(option);
-//            }
-//
-//
-//            optionRepository.saveAll(options);
-//
-//            // Thêm question đã lưu vào danh sách savedQuestions
-//            savedQuestions.add(question);
-//
-//            // In thông tin để kiểm tra (nếu cần)
-//            System.out.println("Quiz ID: " + createdQuiz.getId());
-//            System.out.println("Question ID: " + question.getId());
-//            System.out.println("ID Option:"+options.get(0).getId());
-//        }
-//
-//        // 4. Chuyển đổi quiz đã lưu thành quizDto để trả về
-//        QuizDto savedQuizDto = quizMapper.quizToQuizDto(createdQuiz);
-//        List<QuestionDto> questionDtos = new ArrayList<>();
-//        for (Question savedQuestion : savedQuestions) {
-//            QuestionDto questionDto = questionMapper.questionToQuestionDto(savedQuestion);
-//
-//            List<OptionDto> optionDtos = new ArrayList<>();
-//            for (Option option : savedQuestion.getOptions()) {
-//                optionDtos.add(optionMapper.optionToOptionDto(option));
-//            }
-//            questionDto.setOptions(optionDtos);
-//
-//            questionDtos.add(questionDto);
-//        }
-//        savedQuizDto.setQuestions(questionDtos);
-//
-//        return savedQuizDto;
-//    }
+    @Transactional
+    public QuizDto createQuizz(QuizDto quizDto) {
+        // 1. Retrieve the lesson first
+        Lesson lesson = lessonRepository.findById(quizDto.getLessonId())
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+
+        // 2. Map the DTO to the Quiz entity
+        Quiz quiz = quizMapper.quizDtoToQuiz(quizDto);
+        quiz.setLesson(lesson);
+
+        // 3. Iterate through the questions in the QuizDto and set relationships
+        List<Question> questions = new ArrayList<>();
+        for (QuestionDto questionDto : quizDto.getQuestions()) {
+
+            QuestionType questionType = questionTypeRepository.findById(questionDto.getQuestionTypeId())
+                    .orElseThrow(() -> new AppException(ErrorCode.QUESTION_TYPE_NOT_FOUND));
+
+            Question question = questionMapper.questionDtoToQuestion(questionDto);
+            question.setQuestionType(questionType);
+            question.setQuiz(quiz);
+
+            // 4. Set the options for each question
+            List<Option> options = new ArrayList<>();
+            for (OptionDto optionDto : questionDto.getOptions()) {
+                Option option = optionMapper.optionDtoToOption(optionDto);
+                option.setQuestion(question);
+                options.add(option);
+            }
+
+            question.setOptions(options);
+
+            // Add question to the quiz
+            questions.add(question);
+        }
+        // Set the questions in the quiz entity
+        quiz.setQuestions(questions);
+
+        // 5. Save the quiz with cascade, which will save the questions and options together
+        Quiz savedQuiz = quizRepository.save(quiz);
+
+        // 6. Convert the saved Quiz back to QuizDto
+        QuizDto savedQuizDto = quizMapper.quizToQuizDto(savedQuiz);
+        return savedQuizDto;
+    }
+
 
     //create Quiz,question and option 1 cách
     @Transactional

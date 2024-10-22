@@ -25,7 +25,7 @@ public class QuizController {
     @PostMapping("/addNew")
     public ResponseEntity<ApiRespone<QuizDto>> createQuiz(@RequestBody QuizDto quizDto)
     {
-        QuizDto quiz = quizzService.create(quizDto);
+        QuizDto quiz = quizzService.createQuizz(quizDto);
         ApiRespone<QuizDto> apiRespone = new ApiRespone<>(9898,"Quiz created successfully",quiz);
         return  ResponseEntity.ok(apiRespone);
     }
@@ -45,5 +45,7 @@ public class QuizController {
             ApiRespone<Long> apiRespone = new ApiRespone<>(9999,"Quiz deleted successfully",id);
             return ResponseEntity.ok(apiRespone);
     }
+
+
 
 }

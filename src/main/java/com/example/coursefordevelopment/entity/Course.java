@@ -55,5 +55,8 @@ public class Course {
 
     @OneToMany(mappedBy = "courseEntity")
     private List<Assignment> assignments;
+
+    @OneToMany(mappedBy = "course")
+    private List<Wishlist> wishlists ;
 }
 

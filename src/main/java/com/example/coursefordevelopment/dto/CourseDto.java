@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CourseDto {
-    private Long id;
     private String title;
     private String description;
     private String category;
