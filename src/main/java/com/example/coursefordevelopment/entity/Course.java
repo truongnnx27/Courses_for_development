@@ -24,7 +24,9 @@ public class Course {
 
     private String description;
 
-    private String category;
+    @ManyToOne
+    @JoinColumn(name = "category")
+    private Category category;
 
     private BigDecimal rating = BigDecimal.ZERO;
 

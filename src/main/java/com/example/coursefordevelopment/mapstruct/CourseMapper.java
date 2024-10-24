@@ -13,9 +13,11 @@ public interface CourseMapper {
 
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "courseLevel.id", target = "courseLevelId")
+    @Mapping(source = "category.id", target = "category")
     CourseDto courseToCourseDto(Course course);
 
     @Mapping(source = "userId", target = "user.id")
     @Mapping(source = "courseLevelId", target = "courseLevel.id")
+    @Mapping(source = "category", target = "category.id")
     Course courseDtoToCourse(CourseDto courseDto);
 }

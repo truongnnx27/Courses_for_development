@@ -41,5 +41,8 @@ public class Lesson {
     @ManyToOne
     @JoinColumn(name = "session_id")
     private Session session;
+
+    @OneToMany(mappedBy = "lesson")
+    private List<Comment> comments;
 }
 

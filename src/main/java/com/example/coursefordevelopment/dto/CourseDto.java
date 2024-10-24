@@ -13,7 +13,7 @@ public class CourseDto {
     private Long id;
     private String title;
     private String description;
-    private String category;
+    private Long category;
     private BigDecimal rating;
     private int numberOfRatings;
     private int numberOfStudents;

@@ -15,5 +15,8 @@ public class CommentDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long userId;   // Chỉ map id của User để tránh lặp
+    private Long lessonId; // Chỉ map id của Lesson để tránh lặp
     private Long courseId; // Chỉ map id của Course để tránh lặp
+    private Long commentId; // Chỉ map id của Course để tránh lặp
+    private int star;
 }

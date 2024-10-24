@@ -12,9 +12,9 @@ public interface CategoryMapper {
 
     CategoryMapper INSTANCE = Mappers.getMapper(CategoryMapper.class);
 
-    @Mapping(source = "course.id", target = "courseId")
-    CategoryDto categoryToCategoryDto(Category category);
-
-    @Mapping(source = "courseId", target = "course.id")
-    Category categoryDtoToCategory(CategoryDto categoryDto);
+//    @Mapping(source = "course.id", target = "courseId")
+//    CategoryDto categoryToCategoryDto(Category category);
+//
+//    @Mapping(source = "courseId", target = "course.id")
+//    Category categoryDtoToCategory(CategoryDto categoryDto);
 }

@@ -5,13 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "Course_Tags")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,8 +20,11 @@ public class Category {
     @Column(name = "name_tag",columnDefinition = "nvarchar(100)")
     private String nameTag;
 
-    @ManyToOne
-    @JoinColumn(name = "course_id")
-    private Course course;
+    @Column(name = "image",columnDefinition = "nvarchar(100)")
+    private String image;
+
+    @OneToMany(mappedBy = "category")
+    private List<Course> course;
+
 }
 
