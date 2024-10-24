@@ -10,11 +10,13 @@ import com.example.coursefordevelopment.reponsitory.UserRepository;
 import com.example.coursefordevelopment.service.PaypalService;
 import com.paypal.api.payments.Links;
 import com.paypal.base.rest.PayPalRESTException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -50,38 +52,33 @@ public class PayPalController {
         }
 
         try {
-            // Chuyển đổi số tiền từ VND sang USD
             double amountUSD = amount / EXCHANGE_RATE;
-            String cancelUrl = "http://localhost:8081/api/payments/paypal/cancel"; // URL hủy thanh toán
-            String successUrl = buildSuccessUrl(courseId, userId, amount); // Tạo URL thành công
+            String cancelUrl = "http://localhost:8081/api/payments/paypal/cancel";
+            String successUrl = buildSuccessUrl(courseId, userId, amount);
 
-            // Tạo một đối tượng Payment mới trên PayPal
             com.paypal.api.payments.Payment payment = paypalService.createPayment(amountUSD, "USD",
                     PaypalPaymentMethod.paypal, PaypalPaymentIntent.sale,
                     "Order description", cancelUrl, successUrl);
 
-            // Tạo một đối tượng CoursePayment mới và lưu vào cơ sở dữ liệu
             Payment newPayment = createNewPayment(payment, courseId, userId, amount);
             paymentRepository.save(newPayment);
 
-            updatePaymentStatus(payment.getId(), 1L); // ID 1 cho PENDING
+            updatePaymentStatus(payment.getId(), 1L);
 
-            // Tìm link phê duyệt và trả về phản hồi
             return findApprovalLink(payment)
-                    .map(link -> ResponseEntity.ok("Payment created successfully. Please complete your payment at: " + link))
+                    .map(link -> ResponseEntity.ok("{\"paymentUrl\":\"" + link + "\"}"))
                     .orElse(ResponseEntity.badRequest().body("Payment link not found."));
         } catch (PayPalRESTException e) {
-            // Xử lý lỗi nếu có vấn đề xảy ra trong quá trình tạo thanh toán
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during payment creation: " + e.getMessage());
         }
     }
-
     @GetMapping("/success")
-    public ResponseEntity<String> successPay(@RequestParam("paymentId") String paymentId,
-                                             @RequestParam("PayerID") String payerId,
-                                             @RequestParam(value = "courseId") Long courseId,
-                                             @RequestParam(value = "userId") Long userId,
-                                             @RequestParam(value = "amount") Double amount) {
+    public void successPay(HttpServletResponse httpResponse,
+                           @RequestParam("paymentId") String paymentId,
+                           @RequestParam("PayerID") String payerId,
+                           @RequestParam(value = "courseId") Long courseId,
+                           @RequestParam(value = "userId") Long userId,
+                           @RequestParam(value = "amount") Double amount) {
         try {
             // Thực hiện thanh toán và nhận thông tin trạng thái từ PayPal
             com.paypal.api.payments.Payment paypalPayment = paypalService.executePayment(paymentId, payerId);
@@ -89,13 +86,16 @@ public class PayPalController {
 
             // Cập nhật trạng thái thanh toán
             updatePaymentStatus(paymentId, statusId);
-            return ResponseEntity.ok("Payment " + (statusId == 2L ? "successful" : "not approved") + ". Payment ID: " + paymentId);
+
+            // Chuyển hướng đến trang thành công
+            String redirectUrl = "http://localhost:8080/vue/payment-success";
+            httpResponse.sendRedirect(redirectUrl);
         } catch (PayPalRESTException e) {
-            // Xử lý lỗi nếu có vấn đề xảy ra trong quá trình thực hiện thanh toán
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment execution failed: " + e.getMessage());
+            e.getMessage();
+        } catch (IOException e) {
+            e.getMessage();
         }
     }
-
     private Payment createNewPayment(com.paypal.api.payments.Payment paypalPayment, Long courseId, Long userId, Double amount) {
         Payment newPayment = new Payment();
         newPayment.setPaymentId(paypalPayment.getId()); // Lưu ID thanh toán từ PayPal

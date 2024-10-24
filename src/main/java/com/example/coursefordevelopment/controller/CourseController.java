@@ -1,7 +1,9 @@
 package com.example.coursefordevelopment.controller;
 
+import com.example.coursefordevelopment.dto.CourseDto;
 import com.example.coursefordevelopment.entity.Course;
 import com.example.coursefordevelopment.reponsitory.CourseRepository;
+import com.example.coursefordevelopment.service.CourseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +19,10 @@ import java.util.List;
 public class CourseController {
 
     @Autowired
-    private CourseRepository courseRepository;
+    private CourseService courseService;
 
     @GetMapping
-    public List<Course> getAllCourses() {
-        return courseRepository.findAll();
+    public List<CourseDto> getAllCourses() {
+        return courseService.getAllCourses();
     }
 }

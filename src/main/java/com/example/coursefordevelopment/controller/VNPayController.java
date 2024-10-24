@@ -7,13 +7,17 @@ import com.example.coursefordevelopment.reponsitory.PaymentStatusRepository;
 import com.example.coursefordevelopment.reponsitory.UserRepository;
 import com.example.coursefordevelopment.service.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments/vnpay")
@@ -36,12 +40,12 @@ public class VNPayController {
 
     // Phương thức tạo đơn hàng mới
     @PostMapping("/pay")
-    public ResponseEntity<String> createOrder(@RequestParam("amount") Integer amount,
-                                              @RequestParam("courseId") Long courseId,
-                                              @RequestParam("userId") Long userId) {
+    public ResponseEntity<Map<String, String>> createOrder(@RequestParam("amount") Integer amount,
+                                                           @RequestParam("courseId") Long courseId,
+                                                           @RequestParam("userId") Long userId) {
         // Kiểm tra dữ liệu đầu vào
         if (amount == null || amount <= 0 || courseId == null || userId == null) {
-            return ResponseEntity.badRequest().body("Amount must be positive, and courseId and userId must not be null.");
+            return ResponseEntity.badRequest().body(Map.of("paymentUrl", ""));
         }
 
         try {
@@ -51,20 +55,22 @@ public class VNPayController {
 
             // Tạo thực thể CoursePayment
             Payment newPayment = createNewPayment(amount, userId, courseId);
-            newPayment.setPaymentId(vnPayService.getTransactionId()); // Lấy transactionId từ VNPay
-            paymentRepository.save(newPayment); // Lưu payment vào cơ sở dữ liệu
+            newPayment.setPaymentId(vnPayService.getTransactionId());
+            paymentRepository.save(newPayment);
 
-            return ResponseEntity.ok("Payment created successfully. Please complete your payment at: " + paymentUrl);
+            // Trả về paymentUrl trong response
+            Map<String, String> response = new HashMap<>();
+            response.put("paymentUrl", paymentUrl);
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during order creation: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error during order creation: " + e.getMessage()));
         }
     }
 
-    // Tạo URL thành công cho thanh toán
     private String buildSuccessUrl(Long courseId, Long userId) {
         return String.format("http://localhost:8081/api/payments/vnpay/success?courseId=%d&userId=%d", courseId, userId);
     }
-
     // Tạo thực thể CoursePayment mới
     private Payment createNewPayment(Integer amount, Long userId, Long courseId) {
         Payment newPayment = new Payment();
@@ -79,28 +85,39 @@ public class VNPayController {
 
     // Phương thức xử lý phản hồi thành công từ VNPay
     @GetMapping("/success")
-    public ResponseEntity<String> successPay(HttpServletRequest request,
-                                             @RequestParam(value = "vnp_TransactionNo") String transactionNo) {
-        // Kiểm tra transactionNo
-        if (transactionNo == null || transactionNo.isEmpty()) {
-            return ResponseEntity.badRequest().body("Transaction number must be provided.");
-        }
+    public void successPay(HttpServletRequest request, HttpServletResponse httpResponse,
+                           @RequestParam(value = "vnp_TransactionNo") String transactionNo) {
+        try {
+            // Kiểm tra transactionNo
+            if (transactionNo == null || transactionNo.isEmpty()) {
+                throw new IllegalArgumentException("Transaction number must be provided.");
+            }
 
-        String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
-        String vnp_Amount = request.getParameter("vnp_Amount");
-        String txnRef = request.getParameter("vnp_TxnRef"); // Lấy txnRef từ phản hồi
+            String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
+            String vnp_Amount = request.getParameter("vnp_Amount");
+            String txnRef = request.getParameter("vnp_TxnRef");
 
-        // Tìm thực thể CoursePayment dựa trên txnRef
-        Payment existingPayment = paymentRepository.findByPaymentId(txnRef)
-                .orElseThrow(() -> new RuntimeException("Payment not found for transactionNo: " + txnRef));
+            // Tìm payment dựa trên txnRef
+            Payment existingPayment = paymentRepository.findByPaymentId(txnRef)
+                    .orElseThrow(() -> new RuntimeException("Payment not found for transactionNo: " + txnRef));
 
-        // Cập nhật trạng thái thanh toán
-        if ("00".equals(vnp_ResponseCode)) {
-            updatePaymentStatus(existingPayment, vnp_Amount, 2L); // ID 2 cho trạng thái COMPLETED
-            return ResponseEntity.ok("Payment successful. Payment ID: " + existingPayment.getId());
-        } else {
-            updatePaymentStatus(existingPayment, vnp_Amount, 3L); // ID 3 cho trạng thái FAILED
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment failed. Response code: " + vnp_ResponseCode);
+            // Cập nhật trạng thái thanh toán
+            if ("00".equals(vnp_ResponseCode)) {
+                updatePaymentStatus(existingPayment, vnp_Amount, 2L); // ID 2 cho COMPLETED
+            } else {
+                updatePaymentStatus(existingPayment, vnp_Amount, 3L); // ID 3 cho FAILED
+            }
+
+            // Chuyển hướng đến trang thành công
+            String redirectUrl = "http://localhost:8080/vue/payment-success"; // Thay URL chính xác
+            httpResponse.sendRedirect(redirectUrl);
+
+        } catch (IllegalArgumentException e) {
+
+        } catch (RuntimeException e) {
+
+        } catch (IOException e) {
+
         }
     }
 
