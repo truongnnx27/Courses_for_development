@@ -73,14 +73,14 @@ public class CommentService {
     }
 
     public void deleteComment(long id) {
-        Comment commentParent = findCommentById(id); // Tìm comment cha
-        while (commentParent != null) {
-            List<Comment> commentChilds = commentRepository.findByReplyId(commentParent.getId()); // Lấy ra comment con
+        Comment commentIndex = commentRepository.findById(id).orElse(null);
+        while (commentIndex != null) {
+            List<Comment> commentChilds = commentRepository.findByReplyId(commentIndex.getId()); // Lấy ra comment con
             if (commentChilds.size() <= 0) { //Nếu không có comment con thì xóa
-                commentRepository.delete(commentParent);
-                commentParent = commentParent.getComment();
+                commentRepository.delete(commentIndex);
+                commentIndex = commentRepository.findById(id).orElse(null);
             } else { // Nếu có comment con thì chuyển comment con tiếp theo làm cha và tiếp tục vòng lặp
-                commentParent = commentChilds.get(0);
+                commentIndex = commentChilds.get(0);
             }
         }
     }
