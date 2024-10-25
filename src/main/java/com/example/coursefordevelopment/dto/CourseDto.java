@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,13 +13,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourseDto {
+    private Long id;
     private String title;
     private String description;
+    private LocalDateTime createdAt;
     private String category;
     private String coverImage;
     private BigDecimal price;
     private boolean published;
     private String level;
-    private Long instructor;
+    private String instructor;
     private List<SectionDto> sections = new ArrayList<>();
 }

@@ -23,10 +23,10 @@ public class Role {
     private String roleName;
 
     @Column(name = "updated_date")
-    private LocalDateTime updatedDate;
+    private LocalDateTime updatedDate = LocalDateTime.now();
 
     @Column(name = "created_date")
-    private LocalDateTime createdDate;
+    private LocalDateTime createdDate = LocalDateTime.now();
 
     @Version
     @Column(name = "version")
