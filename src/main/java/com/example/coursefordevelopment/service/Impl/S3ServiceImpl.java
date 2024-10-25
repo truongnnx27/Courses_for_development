@@ -7,6 +7,7 @@ import com.example.coursefordevelopment.repository.VideoRepository;
 import com.example.coursefordevelopment.service.S3Service;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,7 +22,8 @@ public class S3ServiceImpl implements S3Service {
     private final AmazonS3 amazonS3;
     private final VideoRepository videoRepository;
 
-    private static final String BUCKET_NAME = "lms-cfd";
+    @Value("${s3.bucketName}")
+    private String BUCKET_NAME;
 
     public S3ServiceImpl(AmazonS3 amazonS3, VideoRepository videoRepository) {
         this.amazonS3 = amazonS3;
