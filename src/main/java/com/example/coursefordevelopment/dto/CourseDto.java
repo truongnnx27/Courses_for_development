@@ -5,20 +5,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class CourseDto {
-    private Long id;
     private String title;
     private String description;
     private String category;
-    private BigDecimal rating;
-    private int numberOfRatings;
-    private int numberOfStudents;
+    private String coverImage;
     private BigDecimal price;
-    private String language;
-    private Long userId; // Map user chỉ qua id để tránh lặp vô hạn
-    private Long courseLevelId; // Map courseLevel qua id
+    private boolean published;
+    private String level;
+    private Long instructor;
+    private List<SectionDto> sections = new ArrayList<>();
 }

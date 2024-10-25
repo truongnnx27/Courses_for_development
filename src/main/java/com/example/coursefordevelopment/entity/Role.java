@@ -1,26 +1,35 @@
 package com.example.coursefordevelopment.entity;
 
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-import java.util.List;
-
-@Entity
-@Table(name = "Roles")
+import java.time.LocalDateTime;
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Entity
+@Table(name = "roles")
 public class Role {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(unique = true, nullable = false, columnDefinition = "nvarchar(100)")
+    @Column(name = "role_name", length = 255, nullable = false)
     private String roleName;
 
-    @OneToMany(mappedBy = "role")
-    private List<User> users;
+    @Column(name = "updated_date")
+    private LocalDateTime updatedDate;
+
+    @Column(name = "created_date")
+    private LocalDateTime createdDate;
+
+    @Version
+    @Column(name = "version")
+    private Integer version;
+
 }

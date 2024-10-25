@@ -19,7 +19,8 @@ public class Option {
     private Question question;
 
     @Column(columnDefinition = "nvarchar(255)")
-    private String optionText;
-    private boolean isCorrect;
+    private String text;
+    @Column(name = "is_correct", nullable = false)
+    private boolean correct;
 }
 

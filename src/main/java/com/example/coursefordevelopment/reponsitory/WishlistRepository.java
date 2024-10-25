@@ -1,10 +1,12 @@
 package com.example.coursefordevelopment.reponsitory;
 
-import com.example.coursefordevelopment.entity.CourseLevel;
+import com.example.coursefordevelopment.entity.Wishlist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface CourseLevelRepository extends JpaRepository<CourseLevel,Long> {
+public interface WishlistRepository extends JpaRepository<Wishlist,Long> {
 }

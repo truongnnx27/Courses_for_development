@@ -18,16 +18,16 @@ public class Quiz {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "lesson_id")
-    private Lesson lesson;
+    @OneToOne
+    @JoinColumn(name = "lecture_id")
+    private Lecture lecture;
 
     @Column(nullable = false, columnDefinition = "nvarchar(200)")
     private String title;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "quiz", orphanRemoval = true)
+    @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL)
     private List<Question> questions = new ArrayList<>();
 
     @PrePersist
