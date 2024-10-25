@@ -90,7 +90,7 @@ public class CommentService {
     }
 
     public List<UserCommentDto> findCommentsByLessonId(long id) {
-        List<Object[]> results = commentRepository.getUserCommentLesson(id);
+        List<Object[]> results = commentRepository.getCommentLesson(id);
         List<UserCommentDto> comments = results.stream()
                 .map(result -> new UserCommentDto(
                         (Long) result[0],         // id
