@@ -23,16 +23,14 @@ public class Question {
     @JoinColumn(name = "quiz_id")
     private Quiz quiz;
 
-    @ManyToOne
-    @JoinColumn(name = "question_type_id")
-    private QuestionType questionType;
+    private String questionType;
 
     @Column(nullable = false, columnDefinition = "nvarchar(500)")
-    private String questionText;
+    private String title;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "question", orphanRemoval = true)
+    @OneToMany(mappedBy = "question",cascade = CascadeType.ALL)
     private List<Option> options = new ArrayList<>();
 
     @PrePersist

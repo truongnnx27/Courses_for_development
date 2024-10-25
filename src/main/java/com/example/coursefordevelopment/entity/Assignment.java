@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Assignment {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,21 +21,24 @@ public class Assignment {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "nvarchar(255)")
     private String description;
 
     private Date dueDate;
+
+    private String assignmentFileUrl;
+
+    private LocalDateTime submittedAt;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @ManyToOne
-    @JoinColumn(name = "course_id")
-    private Course courseEntity;
+    @JoinColumn(name = "lecture_id", nullable = false)
+    private Lecture lecture;
 
     @ManyToOne
-    @JoinColumn(name = "lesson_id")
-    private Lesson lesson;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }
 

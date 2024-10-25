@@ -6,18 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "Course_Tags")
+@Table(name = "Categories")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name_tag",columnDefinition = "nvarchar(100)")
-    private String nameTag;
+    @Column(name = "category_name",columnDefinition = "nvarchar(100)")
+    private String categoryName;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
