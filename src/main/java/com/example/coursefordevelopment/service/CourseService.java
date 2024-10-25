@@ -15,12 +15,21 @@ public class CourseService {
     @Autowired
     private CourseRepository courseRepository;
 
+    // Phương thức lấy danh sách tất cả các khóa học
     public List<CourseDto> getAllCourses() {
         return courseRepository.findAll().stream()
                 .map(this::convertToCourseDTO)
                 .collect(Collectors.toList());
     }
 
+    // Phương thức lấy khóa học theo id
+    public CourseDto findCourseById(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Khóa học không tồn tại với id: " + id));
+        return convertToCourseDTO(course);
+    }
+
+    // Chuyển đổi đối tượng Course sang CourseDto
     private CourseDto convertToCourseDTO(Course course) {
         CourseDto courseDTO = new CourseDto();
         courseDTO.setId(course.getId());

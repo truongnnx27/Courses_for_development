@@ -3,10 +3,12 @@ package com.example.coursefordevelopment.controller;
 import com.example.coursefordevelopment.config.PaypalPaymentIntent;
 import com.example.coursefordevelopment.config.PaypalPaymentMethod;
 import com.example.coursefordevelopment.entity.Payment;
+import com.example.coursefordevelopment.entity.User;
 import com.example.coursefordevelopment.reponsitory.CourseRepository;
 import com.example.coursefordevelopment.reponsitory.PaymentRepository;
 import com.example.coursefordevelopment.reponsitory.PaymentStatusRepository;
 import com.example.coursefordevelopment.reponsitory.UserRepository;
+import com.example.coursefordevelopment.service.EmailService;
 import com.example.coursefordevelopment.service.PaypalService;
 import com.paypal.api.payments.Links;
 import com.paypal.base.rest.PayPalRESTException;
@@ -41,6 +43,9 @@ public class PayPalController {
     private UserRepository userRepository;
 
     private static final double EXCHANGE_RATE = 25000;
+    @Autowired
+    private EmailService emailService;
+
 
     @PostMapping("/pay")
     public ResponseEntity<String> pay(@RequestParam("amount") Double amount,
@@ -87,15 +92,51 @@ public class PayPalController {
             // Cập nhật trạng thái thanh toán
             updatePaymentStatus(paymentId, statusId);
 
+            if (statusId.equals(2L)) { // Chỉ gửi email nếu thanh toán thành công
+                String emailAddress = getUserEmailById(userId); // Lấy email của người dùng theo userId
+
+                // Kiểm tra email có hợp lệ không trước khi gửi
+                if (emailAddress != null) {
+                       String subject = "Payment Confirmation";
+                        StringBuilder body = new StringBuilder();
+                    body.append("<html>")
+                            .append("<head><title>Payment Confirmation</title></head>")
+                            .append("<body>")
+                            .append("<h1>Payment Confirmation</h1>")
+                            .append("<p>Your payment has been successfully processed.</p>")
+                            .append("<ul>")
+                            .append("<li><strong>Payment ID:</strong> ").append(paymentId).append("</li>")
+                            .append("<li><strong>Amount:</strong> ").append(amount).append(" VND</li>")
+                            .append("</ul>")
+                            .append("</body>")
+                            .append("</html>");
+
+                    // Gửi email và kiểm tra nếu có lỗi xảy ra
+                    try {
+                        emailService.sendEmail(emailAddress, subject, body.toString());
+                    } catch (Exception e) {
+                        // Ghi log lỗi gửi email
+                        System.err.println("Error sending email: " + e.getMessage());
+                    }
+                } else {
+                    System.err.println("No email found for user ID: " + userId);
+                }
+            }
+
             // Chuyển hướng đến trang thành công
             String redirectUrl = "http://localhost:8080/vue/payment-success";
             httpResponse.sendRedirect(redirectUrl);
         } catch (PayPalRESTException e) {
-            e.getMessage();
+            System.err.println("PayPal REST exception: " + e.getMessage());
         } catch (IOException e) {
-            e.getMessage();
+            System.err.println("IO exception: " + e.getMessage());
         }
     }
+    private String getUserEmailById(Long userId) {
+        Optional<User> user = userRepository.findById(userId);
+        return user.map(User::getEmail).orElse(null); // Lấy email hoặc null nếu không tìm thấy
+    }
+
     private Payment createNewPayment(com.paypal.api.payments.Payment paypalPayment, Long courseId, Long userId, Double amount) {
         Payment newPayment = new Payment();
         newPayment.setPaymentId(paypalPayment.getId()); // Lưu ID thanh toán từ PayPal
