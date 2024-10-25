@@ -35,4 +35,9 @@ public class Payment {
     @ManyToOne
     @JoinColumn(name = "payment_status_id")
     private PaymentStatus paymentStatus;
+
+
+    public Long getUserId() {
+        return this.getId();
+    }
 }

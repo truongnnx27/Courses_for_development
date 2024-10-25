@@ -1,11 +1,14 @@
 package com.example.coursefordevelopment.controller;
 
 import com.example.coursefordevelopment.entity.Payment;
+import com.example.coursefordevelopment.entity.User;
 import com.example.coursefordevelopment.reponsitory.CourseRepository;
 import com.example.coursefordevelopment.reponsitory.PaymentRepository;
 import com.example.coursefordevelopment.reponsitory.PaymentStatusRepository;
 import com.example.coursefordevelopment.reponsitory.UserRepository;
+import com.example.coursefordevelopment.service.EmailService;
 import com.example.coursefordevelopment.service.VNPayService;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/payments/vnpay")
@@ -37,6 +41,8 @@ public class VNPayController {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private EmailService emailService;
 
     // Phương thức tạo đơn hàng mới
     @PostMapping("/pay")
@@ -86,7 +92,7 @@ public class VNPayController {
     // Phương thức xử lý phản hồi thành công từ VNPay
     @GetMapping("/success")
     public void successPay(HttpServletRequest request, HttpServletResponse httpResponse,
-                           @RequestParam(value = "vnp_TransactionNo") String transactionNo) {
+                           @RequestParam(value = "vnp_TxnRef") String transactionNo) {
         try {
             // Kiểm tra transactionNo
             if (transactionNo == null || transactionNo.isEmpty()) {
@@ -95,11 +101,10 @@ public class VNPayController {
 
             String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
             String vnp_Amount = request.getParameter("vnp_Amount");
-            String txnRef = request.getParameter("vnp_TxnRef");
 
             // Tìm payment dựa trên txnRef
-            Payment existingPayment = paymentRepository.findByPaymentId(txnRef)
-                    .orElseThrow(() -> new RuntimeException("Payment not found for transactionNo: " + txnRef));
+            Payment existingPayment = paymentRepository.findByPaymentId(transactionNo)
+                    .orElseThrow(() -> new RuntimeException("Payment not found for transactionNo: " + transactionNo));
 
             // Cập nhật trạng thái thanh toán
             if ("00".equals(vnp_ResponseCode)) {
@@ -108,17 +113,44 @@ public class VNPayController {
                 updatePaymentStatus(existingPayment, vnp_Amount, 3L); // ID 3 cho FAILED
             }
 
+            // Nếu thanh toán thành công, gửi email xác nhận (nếu cần)
+            if ("00".equals(vnp_ResponseCode)) {
+                String emailAddress = getUserEmailById(existingPayment.getUserId()); // Lấy email của người dùng
+                String subject = "Payment Confirmation";
+                StringBuilder body = new StringBuilder();
+                body.append("<html>")
+                        .append("<head><title>Payment Confirmation</title></head>")
+                        .append("<body>")
+                        .append("<h1>Payment Confirmation</h1>")
+                        .append("<p>Your payment has been successfully processed.</p>")
+                        .append("<ul>")
+                        .append("<li><strong>Transaction Number:</strong> ").append(transactionNo).append("</li>")
+                        .append("<li><strong>Amount:</strong> ").append(vnp_Amount).append(" VND</li>")
+                        .append("</ul>")
+                        .append("</body>")
+                        .append("</html>");
+
+                emailService.sendEmail(emailAddress, subject, body.toString());
+            }
+
             // Chuyển hướng đến trang thành công
             String redirectUrl = "http://localhost:8080/vue/payment-success"; // Thay URL chính xác
             httpResponse.sendRedirect(redirectUrl);
 
-        } catch (IllegalArgumentException e) {
-
+        } catch (IllegalArgumentException | MessagingException e) {
+            // Xử lý lỗi khi không có transactionNo
+            System.err.println("Error: " + e.getMessage());
         } catch (RuntimeException e) {
-
+            // Xử lý lỗi khi không tìm thấy payment
+            System.err.println("Error: " + e.getMessage());
         } catch (IOException e) {
-
+            // Xử lý lỗi khi chuyển hướng
+            System.err.println("Error: " + e.getMessage());
         }
+    }
+    private String getUserEmailById(Long userId) {
+
+        return userRepository.findEmailById(userId);
     }
 
     // Phương thức cập nhật trạng thái thanh toán
