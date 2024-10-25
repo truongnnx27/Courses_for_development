@@ -1,5 +1,6 @@
 package com.example.coursefordevelopment.entity;
 
+import com.example.coursefordevelopment.entity.Role;
 import com.example.coursefordevelopment.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
@@ -67,9 +68,7 @@ public class User {
     private Role roleEntity;
 
     @OneToMany(mappedBy = "instructor")
-    List<Course> courses;
+    private List<Course> courses;
 
-    @OneToMany(mappedBy = "user")
-    List<Wishlist> wishlists;
 
 }
