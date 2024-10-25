@@ -92,6 +92,7 @@ SELECT VERSION();
 
 select
     c.id as id,
+    u.id as idUserComment,
     u.full_name as fullName,
     u.profile_picture as profilePicture,
     c.comment_text as commentText,

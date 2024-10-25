@@ -16,6 +16,7 @@ public interface CommentRepository extends JpaRepository<Comment,Long> {
     @Query(value = "select " +
             "c.id as id, " +
             "u.full_name as fullName, " +
+            "u.id as idUserComment, " +
             "u.profile_picture as profilePicture, " +
             "c.comment_text as commentText, " +
             "userCommentParent.full_name as nameUserReply, " +
@@ -23,7 +24,8 @@ public interface CommentRepository extends JpaRepository<Comment,Long> {
             "from comments c " +
             "inner join users u on c.user_id = u.id " +
             "left join comments commentParent on c.comment_id = commentParent.id " +
-            "left join users userCommentParent on commentParent.user_id = userCommentParent.id", nativeQuery = true)
+            "left join users userCommentParent on commentParent.user_id = userCommentParent.id " +
+            "where c.lessons_id = :id", nativeQuery = true)
     List<Object[]> getUserCommentLesson(Long id);
 
 

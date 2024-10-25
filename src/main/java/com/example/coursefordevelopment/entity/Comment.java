@@ -2,7 +2,6 @@ package com.example.coursefordevelopment.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonMerge;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -95,13 +95,21 @@ public class CommentService {
                 .map(result -> new UserCommentDto(
                         (Long) result[0],         // id
                         (String) result[1],       // fullName
-                        (String) result[2],       // profilePicture
-                        (String) result[3],    // commentText
-                        (String) result[4],       // nameUserReply
-                        (Long) result[5]          // parentId
+                        (Long) result[2],           //idUserComment
+                        (String) result[3],       // profilePicture
+                        (String) result[4],    // commentText
+                        (String) result[5],       // nameUserReply
+                        (Long) result[6]         // parentId
                 ))
                 .collect(Collectors.toList());
         return comments;
     }
 
+    public Comment putComment(long id, CommentDto commentDto) {
+        Comment comment = findCommentById(id);
+        Comment commentUpdate = commentMapper.commentDtoToComment(commentDto);
+        comment.setCommentText(commentUpdate.getCommentText());
+        comment.setUpdatedAt(LocalDateTime.now());
+        return commentRepository.save(comment);
+    }
 }

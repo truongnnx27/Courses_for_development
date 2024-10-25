@@ -4,10 +4,6 @@ import com.example.coursefordevelopment.dto.CommentDto;
 import com.example.coursefordevelopment.dto.UserCommentDto;
 import com.example.coursefordevelopment.entity.Comment;
 import com.example.coursefordevelopment.mapstruct.CommentMapper;
-import com.example.coursefordevelopment.reponsitory.CommentRepository;
-import com.example.coursefordevelopment.reponsitory.CourseRepository;
-import com.example.coursefordevelopment.reponsitory.LessonRepository;
-import com.example.coursefordevelopment.reponsitory.UserRepository;
 import com.example.coursefordevelopment.service.CommentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@CrossOrigin("*")
+@CrossOrigin(origins = "http://localhost:8080")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class CommentController {
@@ -44,12 +40,14 @@ public class CommentController {
         CommentDto responseDto = commentMapper.commentToCommentDto(comment);
         return ResponseEntity.ok(responseDto);
     }
-//
-//    @PutMapping("/putComment/{id}")
-//    public Comment updateComment(@PathVariable Long id, @RequestBody Comment comment) {
-//
-//    }
-//
+
+
+    @RequestMapping("/putComment/{id}")
+    public ResponseEntity<CommentDto> updateComment(@PathVariable Long id, @RequestBody CommentDto commentDto) {
+        Comment comment = commentService.putComment(id, commentDto);
+        return ResponseEntity.ok(commentMapper.commentToCommentDto(comment));
+    }
+
     @DeleteMapping("/deleteComment/{id}")
     public ResponseEntity<CommentDto> deleteComment(@PathVariable Long id) {
         if (commentService.isCommentExist(id)) {
