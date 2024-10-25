@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -16,7 +17,7 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String paymentId;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -24,20 +25,14 @@ public class Payment {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
-    private BigDecimal amount;
+    private BigDecimal price = BigDecimal.ZERO;
 
     private LocalDateTime paymentDate= LocalDateTime.now();
 
     @Column(name = "enrollment", columnDefinition = "bit")
     private Boolean enrollment;
-
+    private String paymentId;
     @ManyToOne
     @JoinColumn(name = "payment_status_id")
     private PaymentStatus paymentStatus;
-
-
-    public Long getUserId() {
-        return this.getId();
-    }
 }

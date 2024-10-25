@@ -1,39 +1,21 @@
 package com.example.coursefordevelopment.service;
 
-import com.example.coursefordevelopment.dto.UserDto;
-import com.example.coursefordevelopment.entity.User;
-import com.example.coursefordevelopment.reponsitory.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import com.example.coursefordevelopment.dto.request.UserCreationRequest;
+import com.example.coursefordevelopment.dto.request.UserUpdateRequest;
+import com.example.coursefordevelopment.dto.response.UserResponse;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-@Service
-public class UserService {
+public interface UserService {
+    UserResponse createUser(UserCreationRequest request);
 
-    @Autowired
-    private UserRepository userRepository;
+    UserResponse getMyInfo();
 
-    public List<UserDto> getAllUserDtos() {
-        return userRepository.findAll().stream()
-                .map(this::convertToUserDTO)
-                .collect(Collectors.toList());
-    }
+    List<UserResponse> getUsers();
 
-    private UserDto convertToUserDTO(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getProfilePicture(),
-                user.getBio(),
-                user.getWebsite(),
-                user.getEmailVerified(),
-                user.getRole().getId()
-        );
-    }
+    UserResponse getUser(String id);
 
+    UserResponse updateUser(String userId, UserUpdateRequest request);
+
+    void deleteUser(String userId);
 }

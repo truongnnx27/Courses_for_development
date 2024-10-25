@@ -1,13 +1,13 @@
 package com.example.coursefordevelopment.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 @Entity
-@Table(name = "Video")
+@Table(name = "Videos")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,15 +16,12 @@ public class Video {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @ManyToOne
-    @JoinColumn(name = "lesson_id")
-    private Lesson lesson;
-
+    private String fileName;
+    private String duration;
     private String videoUrl;
-    private boolean isCompleted;
-}
 
+    @ManyToOne
+    @JoinColumn(name = "lecture_id")
+    @JsonBackReference
+    private Lecture lecture;
+}

@@ -1,17 +1,10 @@
 package com.example.coursefordevelopment.controller;
 
-import com.example.coursefordevelopment.config.PaypalPaymentIntent;
-import com.example.coursefordevelopment.config.PaypalPaymentMethod;
-import com.example.coursefordevelopment.entity.Payment;
-import com.example.coursefordevelopment.entity.User;
-import com.example.coursefordevelopment.reponsitory.CourseRepository;
-import com.example.coursefordevelopment.reponsitory.PaymentRepository;
-import com.example.coursefordevelopment.reponsitory.PaymentStatusRepository;
-import com.example.coursefordevelopment.reponsitory.UserRepository;
 import com.example.coursefordevelopment.service.EmailService;
 import com.example.coursefordevelopment.service.PaypalService;
-import com.paypal.api.payments.Links;
+import com.paypal.api.payments.Payment;
 import com.paypal.base.rest.PayPalRESTException;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,9 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/payments/paypal")
@@ -29,151 +19,58 @@ public class PayPalController {
 
     @Autowired
     private PaypalService paypalService;
-
-    @Autowired
-    private PaymentRepository paymentRepository;
-
-    @Autowired
-    private PaymentStatusRepository paymentStatusRepository;
-
-    @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    private static final double EXCHANGE_RATE = 25000;
     @Autowired
     private EmailService emailService;
 
-
     @PostMapping("/pay")
-    public ResponseEntity<String> pay(@RequestParam("amount") Double amount,
+    public ResponseEntity<String> pay(@RequestParam("price") Double price,
                                       @RequestParam("courseId") Long courseId,
-                                      @RequestParam("userId") Long userId) {
-        // Kiểm tra xem các tham số đầu vào có hợp lệ hay không
-        if (amount == null || courseId == null || userId == null) {
-            return ResponseEntity.badRequest().body("Amount, courseId, and userId must not be null.");
-        }
-
+                                      @RequestParam("userId") String userId) {
         try {
-            double amountUSD = amount / EXCHANGE_RATE;
-            String cancelUrl = "http://localhost:8081/api/payments/paypal/cancel";
-            String successUrl = buildSuccessUrl(courseId, userId, amount);
-
-            com.paypal.api.payments.Payment payment = paypalService.createPayment(amountUSD, "USD",
-                    PaypalPaymentMethod.paypal, PaypalPaymentIntent.sale,
-                    "Order description", cancelUrl, successUrl);
-
-            Payment newPayment = createNewPayment(payment, courseId, userId, amount);
-            paymentRepository.save(newPayment);
-
-            updatePaymentStatus(payment.getId(), 1L);
-
-            return findApprovalLink(payment)
-                    .map(link -> ResponseEntity.ok("{\"paymentUrl\":\"" + link + "\"}"))
-                    .orElse(ResponseEntity.badRequest().body("Payment link not found."));
+            String paymentUrl = paypalService.processPayment(price, courseId, userId);
+            return ResponseEntity.ok("{\"paymentUrl\":\"" + paymentUrl + "\"}");
         } catch (PayPalRESTException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during payment creation: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @GetMapping("/success")
     public void successPay(HttpServletResponse httpResponse,
                            @RequestParam("paymentId") String paymentId,
                            @RequestParam("PayerID") String payerId,
                            @RequestParam(value = "courseId") Long courseId,
-                           @RequestParam(value = "userId") Long userId,
-                           @RequestParam(value = "amount") Double amount) {
+                           @RequestParam(value = "userId") String userId,
+                           @RequestParam(value = "price") Double price) {
         try {
-            // Thực hiện thanh toán và nhận thông tin trạng thái từ PayPal
-            com.paypal.api.payments.Payment paypalPayment = paypalService.executePayment(paymentId, payerId);
-            Long statusId = "approved".equals(paypalPayment.getState()) ? 2L : 3L; // ID 2 cho COMPLETED, ID 3 cho FAILED
+            Payment paypalPayment = paypalService.executePayment(paymentId, payerId);
+            Long statusId = "approved".equals(paypalPayment.getState()) ? 2L : 3L;
 
-            // Cập nhật trạng thái thanh toán
-            updatePaymentStatus(paymentId, statusId);
+            paypalService.updatePaymentStatus(paymentId, statusId);
 
-            if (statusId.equals(2L)) { // Chỉ gửi email nếu thanh toán thành công
-                String emailAddress = getUserEmailById(userId); // Lấy email của người dùng theo userId
 
-                // Kiểm tra email có hợp lệ không trước khi gửi
-                if (emailAddress != null) {
-                       String subject = "Payment Confirmation";
-                        StringBuilder body = new StringBuilder();
-                    body.append("<html>")
-                            .append("<head><title>Payment Confirmation</title></head>")
-                            .append("<body>")
-                            .append("<h1>Payment Confirmation</h1>")
-                            .append("<p>Your payment has been successfully processed.</p>")
-                            .append("<ul>")
-                            .append("<li><strong>Payment ID:</strong> ").append(paymentId).append("</li>")
-                            .append("<li><strong>Amount:</strong> ").append(amount).append(" VND</li>")
-                            .append("</ul>")
-                            .append("</body>")
-                            .append("</html>");
-
-                    // Gửi email và kiểm tra nếu có lỗi xảy ra
-                    try {
-                        emailService.sendEmail(emailAddress, subject, body.toString());
-                    } catch (Exception e) {
-                        // Ghi log lỗi gửi email
-                        System.err.println("Error sending email: " + e.getMessage());
-                    }
-                } else {
-                    System.err.println("No email found for user ID: " + userId);
+            if (statusId.equals(2L)) {
+                String email = paypalService.getUserEmailById(userId); // Lấy email người dùng
+                if (email != null) {
+                    paypalService.sendPaymentConfirmationEmail(email, paymentId, price); // Gửi email xác nhận
                 }
             }
 
-            // Chuyển hướng đến trang thành công
-            String redirectUrl = "http://localhost:8080/vue/payment-success";
-            httpResponse.sendRedirect(redirectUrl);
+            httpResponse.sendRedirect("http://localhost:8080/vue/payment-success");
         } catch (PayPalRESTException e) {
-            System.err.println("PayPal REST exception: " + e.getMessage());
+            // Xử lý lỗi
         } catch (IOException e) {
-            System.err.println("IO exception: " + e.getMessage());
+            e.printStackTrace();
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
         }
-    }
-    private String getUserEmailById(Long userId) {
-        Optional<User> user = userRepository.findById(userId);
-        return user.map(User::getEmail).orElse(null); // Lấy email hoặc null nếu không tìm thấy
-    }
-
-    private Payment createNewPayment(com.paypal.api.payments.Payment paypalPayment, Long courseId, Long userId, Double amount) {
-        Payment newPayment = new Payment();
-        newPayment.setPaymentId(paypalPayment.getId()); // Lưu ID thanh toán từ PayPal
-        newPayment.setAmount(new BigDecimal(amount)); // Lưu số tiền vào database (VND)
-        newPayment.setPaymentDate(LocalDateTime.now()); // Lưu thời gian thanh toán hiện tại
-        newPayment.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"))); // Lấy thông tin người dùng
-        newPayment.setCourse(courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found"))); // Lấy thông tin khóa học
-        newPayment.setPaymentStatus(paymentStatusRepository.findById(1L).orElseThrow(() -> new RuntimeException("Payment status not found"))); // ID 1 cho PENDING
-        newPayment.setEnrollment(true); // Đánh dấu đăng ký thành công
-        return newPayment; // Trả về đối tượng CoursePayment mới
-    }
-
-    private void updatePaymentStatus(String paymentId, long statusId) {
-        // Tìm thanh toán dựa trên paymentId
-        Payment payment = paymentRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found for paymentId: " + paymentId));
-        // Cập nhật trạng thái thanh toán
-        payment.setPaymentStatus(paymentStatusRepository.findById(statusId).orElseThrow(() -> new RuntimeException("Payment status not found")));
-        paymentRepository.save(payment); // Lưu thay đổi vào cơ sở dữ liệu
     }
 
     @GetMapping("/cancel")
-    public ResponseEntity<String> cancelPay() {
-        // Xử lý khi thanh toán bị hủy
+    public ResponseEntity<String> cancel() {
         return ResponseEntity.ok("Payment cancelled");
     }
 
-    private String buildSuccessUrl(Long courseId, Long userId, Double amount) {
-        // Tạo URL thành công với các tham số cần thiết
-        return String.format("http://localhost:8081/api/payments/paypal/success?courseId=%d&userId=%d&amount=%.2f", courseId, userId, amount);
-    }
 
-    private Optional<String> findApprovalLink(com.paypal.api.payments.Payment payment) {
-        // Tìm link phê duyệt trong danh sách các link trả về từ PayPal
-        return payment.getLinks().stream()
-                .filter(link -> "approval_url".equals(link.getRel())) // Lọc link có rel là "approval_url"
-                .map(Links::getHref) // Lấy href của link
-                .findFirst(); // Trả về link đầu tiên tìm được
-    }
 }

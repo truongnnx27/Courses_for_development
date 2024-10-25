@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentDto {
-    private Long id;
-    private Long courseId;  // Map chỉ ID của Course
-    private Long userId;    // Map chỉ ID của User
-    private BigDecimal amount;
+    private String paymentId;
+    private BigDecimal price;
     private LocalDateTime paymentDate;
-    private Boolean enrollment;
-    private Long paymentStatusId; // Map ID của PaymentStatus
+    private String userId;
+    private Long courseId;
+    private Long paymentStatusId;
+    private boolean enrollment;
 }

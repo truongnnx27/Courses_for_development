@@ -1,30 +1,35 @@
 package com.example.coursefordevelopment.entity;
 
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-import java.util.List;
-
-@Entity
-@Table(name = "Roles")
+import java.time.LocalDateTime;
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Entity
+@Table(name = "roles")
 public class Role {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "role_name", length = 255, nullable = false)
     private String roleName;
 
-    @OneToMany(mappedBy = "role")
-    private List<User> users;
-//    @Override
-//    public String toString() {
-//        return "Role{id=" + id + ", roleName='" + roleName + "'}"; // Chỉ hiển thị những thông tin cần thiết
-//    }
+    @Column(name = "updated_date")
+    private LocalDateTime updatedDate = LocalDateTime.now();
+
+    @Column(name = "created_date")
+    private LocalDateTime createdDate = LocalDateTime.now();
+
+    @Version
+    @Column(name = "version")
+    private Integer version;
+
 }

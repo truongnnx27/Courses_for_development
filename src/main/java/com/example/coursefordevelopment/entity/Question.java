@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -22,15 +23,24 @@ public class Question {
     @JoinColumn(name = "quiz_id")
     private Quiz quiz;
 
-    @ManyToOne
-    @JoinColumn(name = "question_type_id")
-    private QuestionType questionType;
+    private String questionType;
 
-    @Column(nullable = false)
-    private String questionText;
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(nullable = false, columnDefinition = "nvarchar(500)")
+    private String title;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "question")
-    private List<Option> options;
+    @OneToMany(mappedBy = "question",cascade = CascadeType.ALL)
+    private List<Option> options = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

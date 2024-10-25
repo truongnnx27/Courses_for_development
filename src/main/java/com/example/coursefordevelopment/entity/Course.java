@@ -1,5 +1,6 @@
 package com.example.coursefordevelopment.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -23,35 +25,19 @@ public class Course {
     private String title;
 
     private String description;
-
     private String category;
-
-    private BigDecimal rating = BigDecimal.ZERO;
-
-    private int numberOfRatings = 0;
-
-    private int numberOfStudents = 0;
-
+    private String coverImage;
     private BigDecimal price = BigDecimal.ZERO;
-
-    private String language = "English";
-
     private LocalDateTime createdAt = LocalDateTime.now();
-
     private LocalDateTime updatedAt = LocalDateTime.now();
+    private boolean isPublished = false;
+    private String level;
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
-    private User user;
+    @JoinColumn(name = "instructor_id", nullable = false)
+    private User instructor;
 
-    @ManyToOne
-    @JoinColumn(name = "course_level_id")
-    private CourseLevel courseLevel;
-
-    @OneToMany(mappedBy = "course")
-    private List<Comment> comments;
-
-    @OneToMany(mappedBy = "courseEntity")
-    private List<Assignment> assignments;
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Section> sections = new ArrayList<>();
 }
-

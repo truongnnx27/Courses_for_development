@@ -5,6 +5,7 @@ import com.example.coursefordevelopment.config.PaypalPaymentMethod;
 import com.paypal.api.payments.*;
 import com.paypal.base.rest.APIContext;
 import com.paypal.base.rest.PayPalRESTException;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,52 +14,20 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-public class PaypalService {
+public interface PaypalService {
 
-    @Autowired
-    private APIContext apiContext;
 
-    public Payment createPayment(
-            Double total,
-            String currency,
-            PaypalPaymentMethod method,
-            PaypalPaymentIntent intent,
-            String description,
-            String cancelUrl,
-            String successUrl) throws PayPalRESTException{
-        Amount amount = new Amount();
-        amount.setCurrency(currency);
-        total = new BigDecimal(total).setScale(2, RoundingMode.HALF_UP).doubleValue();
-        amount.setTotal(String.format("%.2f", total));
+    Payment createPayment(Double total, String currency, PaypalPaymentMethod method, PaypalPaymentIntent intent, String description, String cancelUrl, String successUrl) throws PayPalRESTException;
 
-        Transaction transaction = new Transaction();
-        transaction.setDescription(description);
-        transaction.setAmount(amount);
+    Payment executePayment(String paymentId, String payerId) throws PayPalRESTException;
 
-        List<Transaction> transactions = new ArrayList<>();
-        transactions.add(transaction);
+    String processPayment(Double price, Long courseId, String userId) throws PayPalRESTException;
 
-        Payer payer = new Payer();
-        payer.setPaymentMethod(method.toString());
+    String getUserEmailById(String userId);
 
-        Payment payment = new Payment();
-        payment.setIntent(intent.toString());
-        payment.setPayer(payer);
-        payment.setTransactions(transactions);
-        RedirectUrls redirectUrls = new RedirectUrls();
-        redirectUrls.setCancelUrl(cancelUrl);
-        redirectUrls.setReturnUrl(successUrl);
-        payment.setRedirectUrls(redirectUrls);
+    void updatePaymentStatus(String paymentId, long statusId);
 
-        return payment.create(apiContext);
-    }
+    void sendPaymentConfirmationEmail(String emailAddress, String paymentId, Double price) throws MessagingException;
 
-    public Payment executePayment(String paymentId, String payerId) throws PayPalRESTException{
-        Payment payment = new Payment();
-        payment.setId(paymentId);
-        PaymentExecution paymentExecute = new PaymentExecution();
-        paymentExecute.setPayerId(payerId);
-        return payment.execute(apiContext, paymentExecute);
-    }
+
 }

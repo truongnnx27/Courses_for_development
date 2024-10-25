@@ -18,7 +18,9 @@ public class Option {
     @JoinColumn(name = "question_id")
     private Question question;
 
-    private String optionText;
-    private boolean isCorrect;
+    @Column(columnDefinition = "nvarchar(255)")
+    private String text;
+    @Column(name = "is_correct", nullable = false)
+    private boolean correct;
 }
 

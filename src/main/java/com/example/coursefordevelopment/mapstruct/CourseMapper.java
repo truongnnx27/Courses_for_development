@@ -1,21 +1,37 @@
 package com.example.coursefordevelopment.mapstruct;
 
-import com.example.coursefordevelopment.dto.CourseDto;
+import com.example.coursefordevelopment.dto.request.CourseCreationRequest;
+import com.example.coursefordevelopment.dto.response.CourseResponse;
+import com.example.coursefordevelopment.dto.response.UserResponse;
 import com.example.coursefordevelopment.entity.Course;
+import com.example.coursefordevelopment.entity.User;
+import com.example.coursefordevelopment.repository.UserRepository;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
+import org.springframework.beans.factory.annotation.Autowired;
 
+@Mapper(componentModel = "spring", uses = {UserMapper.class})
+public abstract class CourseMapper {
+    @Autowired
+    private UserRepository userRepository;
 
-@Mapper
-public interface CourseMapper {
-    CourseMapper INSTANCE = Mappers.getMapper(CourseMapper.class);
+    public static final CourseMapper INSTANCE = Mappers.getMapper(CourseMapper.class);
 
-    @Mapping(source = "user.id", target = "userId")
-    @Mapping(source = "courseLevel.id", target = "courseLevelId")
-    CourseDto courseToCourseDto(Course course);
+    @Mapping(source = "instructor", target = "instructor", qualifiedByName = "stringToUser")
+    public abstract Course toCourse(CourseCreationRequest courseDto);
 
-    @Mapping(source = "userId", target = "user.id")
-    @Mapping(source = "courseLevelId", target = "courseLevel.id")
-    Course courseDtoToCourse(CourseDto courseDto);
+    @Mapping(source = "instructor", target = "instructor", qualifiedByName = "userToUserResponse")
+    public abstract CourseResponse toCourseResponse(Course course);
+
+    @Named("stringToUser")
+    User stringToUser(String instructor) {
+        return userRepository.findById(instructor).orElseThrow(() -> new RuntimeException("Instructor not found"));
+    }
+
+    @Named("userToUserResponse")
+    UserResponse userToUserResponse(User user) {
+        return UserMapper.INSTANCE.toUserResponse(user);
+    }
 }
