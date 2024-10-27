@@ -26,6 +26,7 @@ public class Course {
 
     private String description;
     private String category;
+    @Column(name = "cover_image", columnDefinition = "TEXT")
     private String coverImage;
     private BigDecimal price = BigDecimal.ZERO;
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -40,4 +41,5 @@ public class Course {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Section> sections = new ArrayList<>();
+
 }

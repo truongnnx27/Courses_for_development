@@ -1,11 +1,13 @@
 package com.example.coursefordevelopment.service.Impl;
 
-import com.example.coursefordevelopment.dto.CourseDto;
+import com.example.coursefordevelopment.dto.request.CourseCreationRequest;
+import com.example.coursefordevelopment.dto.response.CourseResponse;
 import com.example.coursefordevelopment.entity.*;
 import com.example.coursefordevelopment.mapstruct.CourseMapper;
 import com.example.coursefordevelopment.repository.CourseRepository;
 import com.example.coursefordevelopment.repository.UserRepository;
 import com.example.coursefordevelopment.service.CourseService;
+import com.example.coursefordevelopment.service.EmailService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,19 +17,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class CourseServiceImpl implements CourseService {
     private final CourseRepository courseRepository;
-    private final CourseMapper courseMapper = CourseMapper.INSTANCE;
+    private final CourseMapper courseMapper;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
-    public CourseServiceImpl(CourseRepository courseRepository, UserRepository userRepository) {
+    public CourseServiceImpl(CourseRepository courseRepository, CourseMapper courseMapper, UserRepository userRepository, EmailService emailService) {
         this.courseRepository = courseRepository;
+        this.courseMapper = courseMapper;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @Override
-    public CourseDto createCourse(CourseDto courseDto) {
-        User instructor = userRepository.findById(String.valueOf(courseDto.getInstructor())).orElseThrow(() -> new RuntimeException("Instructor not found"));
-        Course course = courseMapper.courseDtoToCourse(courseDto);
-        course.setInstructor(instructor); // Thiết lập quan hệ giữa Course và User
+    public CourseResponse createCourse(CourseCreationRequest courseCreationRequest) {
+        Course course = courseMapper.toCourse(courseCreationRequest);
+        course.setInstructor(userRepository.findById(courseCreationRequest.getInstructor())
+                .orElseThrow(() -> new RuntimeException("Instructor not found"))); // Thiết lập quan hệ giữa Course và User
         // Thiết lập quan hệ trước khi lưu
         if (course.getSections() != null) {
             for (Section section : course.getSections()) {
@@ -62,33 +67,34 @@ public class CourseServiceImpl implements CourseService {
         course = courseRepository.save(course);
 
         // Trả về CourseDto sau khi đã lưu
-        return courseMapper.courseToCourseDto(course);
+        return courseMapper.toCourseResponse(course);
     }
 
 
 
     @Override
-    public Page<CourseDto> getAllCourses(int page, int size) {
+    public Page<CourseResponse> getAllCourses(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return courseRepository.findAll(pageable).map(courseMapper::courseToCourseDto);
+        return courseRepository.findAll(pageable).map(courseMapper::toCourseResponse);
     }
 
     @Override
-    public CourseDto getCourseById(Long id) {
+    public CourseResponse getCourseById(Long id) {
         Course course = courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
-        return courseMapper.courseToCourseDto(course);
+        return courseMapper.toCourseResponse(course);
     }
 
     @Override
-    public CourseDto updateCourse(Long id, CourseDto courseDto) {
+    public CourseResponse updateCourse(Long id, CourseCreationRequest courseCreationRequest) {
         courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
-        Course course = courseMapper.courseDtoToCourse(courseDto);
-        return courseMapper.courseToCourseDto(courseRepository.save(course));
+        Course course = courseMapper.toCourse(courseCreationRequest);
+        return courseMapper.toCourseResponse(courseRepository.save(course));
     }
 
     @Override
     public void deleteCourse(Long id) {
         courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
+        emailService.sendEmailDeleteCourse(id);
         courseRepository.deleteById(id);
     }
 }

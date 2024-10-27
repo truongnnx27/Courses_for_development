@@ -98,6 +98,17 @@ public class S3ServiceImpl implements S3Service {
         return videos;
     }
 
+    @Override
+    public String uploadImage(MultipartFile file) throws IOException {
+        String fileName = file.getOriginalFilename();
+        // Tạo yêu cầu tải lên
+        PutObjectRequest putRequest = new PutObjectRequest(BUCKET_NAME, fileName, file.getInputStream(), new ObjectMetadata());
+        // Tải lên file
+        amazonS3.putObject(putRequest);
+        // Trả về URL của file
+        return "https://" + BUCKET_NAME + ".s3.amazonaws.com/" + fileName;
+    }
+
     private String getVideoDuration(MultipartFile file) throws IOException {
         // Sử dụng thư viện Tika để lấy thông tin video
         Tika tika = new Tika();

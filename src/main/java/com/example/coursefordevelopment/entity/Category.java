@@ -17,9 +17,5 @@ public class Category {
 
     @Column(name = "category_name",columnDefinition = "nvarchar(100)")
     private String categoryName;
-
-    @ManyToOne
-    @JoinColumn(name = "course_id")
-    private Course course;
 }
 

@@ -42,7 +42,7 @@ public class SecurityConfig {
                 cors -> cors.configurationSource(corsConfigurationSource())
         );
         httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                request.requestMatchers("/**").permitAll()
                         .anyRequest().authenticated());
 
         httpSecurity.oauth2ResourceServer(oauth2 ->
@@ -85,7 +85,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:8081"); // Chỉ định frontend URL
+        configuration.addAllowedOrigin("*"); // Chỉ định frontend URL
         configuration.addAllowedMethod("POST"); // Cho phép phương thức POST
         configuration.addAllowedMethod("GET");
         configuration.addAllowedMethod("PUT");

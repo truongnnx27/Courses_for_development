@@ -1,6 +1,7 @@
 package com.example.coursefordevelopment.controller;
 
-import com.example.coursefordevelopment.dto.CourseDto;
+import com.example.coursefordevelopment.dto.request.CourseCreationRequest;
+import com.example.coursefordevelopment.dto.response.CourseResponse;
 import com.example.coursefordevelopment.service.CourseService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -8,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -20,19 +23,18 @@ public class CourseController {
 
 
     @PostMapping
-    public ResponseEntity<CourseDto> createCourse(@Valid @RequestBody CourseDto courseDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(courseService.createCourse(courseDto));
+    public ResponseEntity<CourseResponse> createCourse(@Valid @RequestBody CourseCreationRequest courseCreationRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(courseService.createCourse(courseCreationRequest));
     }
 
     @GetMapping
-    public ResponseEntity<Page<CourseDto>> getAllCourses(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<CourseResponse>> getAllCourses(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(courseService.getAllCourses(page, size));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    public ResponseEntity<CourseDto> deleteCourse(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> deleteCourse(@PathVariable Long id) {
         courseService.deleteCourse(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of("message", "Course "+id+" deleted successfully"));
     }
 }
