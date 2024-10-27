@@ -1,5 +1,6 @@
 package coursefordevelopment.service.Impl;
 
+import com.example.coursefordevelopment.dto.request.UpdatePassWordRequest;
 import com.example.coursefordevelopment.dto.request.UserCreationRequest;
 import com.example.coursefordevelopment.dto.request.UserUpdateRequest;
 import com.example.coursefordevelopment.dto.response.UserResponse;
@@ -36,11 +37,19 @@ public class UserServiceImpl implements UserService {
     public UserResponse getMyInfo(){
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
-
         User user =  userRepository.findByUsername(username).orElseThrow(
                 () -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         return userMapper.toUserResponse(user);
+    }
+
+    public String getMyId(){
+        var context = SecurityContextHolder.getContext();
+        String username = context.getAuthentication().getName();
+        User user =  userRepository.findByUsername(username).orElseThrow(
+                () -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        return user.getId();
     }
 
     @Override
@@ -66,9 +75,12 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         userMapper.updateUser(user, request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
+
+
 
     @Override
     public void deleteUser(String userId){
@@ -91,5 +103,16 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
     }
 
+    @Override
+    public void updatePassWord(String email, UpdatePassWordRequest request, boolean vail) {
 
+        if(!vail){
+            return;
+        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+        System.out.println(user);
+    }
 }

@@ -3,7 +3,6 @@ package coursefordevelopment.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -42,8 +41,10 @@ public class SecurityConfig {
                 cors -> cors.configurationSource(corsConfigurationSource())
         );
         httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest().authenticated());
+//                request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+//                        .anyRequest().authenticated());
+                request.anyRequest().permitAll());
+
 
         httpSecurity.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer ->
@@ -85,8 +86,8 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:8081"); // Chỉ định frontend URL
-        configuration.addAllowedMethod("POST"); // Cho phép phương thức POST
+        configuration.addAllowedOrigin("http://localhost:8081");
+        configuration.addAllowedMethod("POST");
         configuration.addAllowedMethod("GET");
         configuration.addAllowedMethod("PUT");
         configuration.addAllowedMethod("DELETE");

@@ -1,5 +1,6 @@
 package coursefordevelopment.service;
 
+import com.example.coursefordevelopment.dto.request.UpdatePassWordRequest;
 import com.example.coursefordevelopment.dto.request.UserCreationRequest;
 import com.example.coursefordevelopment.dto.request.UserUpdateRequest;
 import com.example.coursefordevelopment.dto.response.UserResponse;
@@ -18,4 +19,6 @@ public interface UserService {
     UserResponse updateUser(String userId, UserUpdateRequest request);
 
     void deleteUser(String userId);
+
+    void updatePassWord(String email, UpdatePassWordRequest request, boolean vail);
 }
