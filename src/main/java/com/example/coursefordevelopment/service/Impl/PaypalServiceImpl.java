@@ -15,6 +15,7 @@ import com.paypal.api.payments.*;
 import com.paypal.base.rest.APIContext;
 import com.paypal.base.rest.PayPalRESTException;
 import jakarta.mail.MessagingException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -26,27 +27,21 @@ import java.util.Optional;
 
 @Service
 public class PaypalServiceImpl implements PaypalService {
-
-    private final APIContext apiContext;
-    private final PaymentRepository paymentRepository;
-    private final PaymentStatusRepository paymentStatusRepository;
-    private final CourseRepository courseRepository;
-    private final UserRepository userRepository;
-    private final EmailService emailService;
+    @Autowired
+    private APIContext apiContext;
+    @Autowired
+    private PaymentRepository paymentRepository;
+    @Autowired
+    private PaymentStatusRepository paymentStatusRepository;
+    @Autowired
+    private CourseRepository courseRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private EmailService emailService;
     private static final double EXCHANGE_RATE = 25000;
 
-    // Constructor to initialize APIContext and repositories
-    public PaypalServiceImpl(APIContext apiContext, PaymentRepository paymentRepository,
-                             PaymentStatusRepository paymentStatusRepository,
-                             CourseRepository courseRepository,
-                             UserRepository userRepository, EmailService emailService) {
-        this.apiContext = apiContext;
-        this.paymentRepository = paymentRepository;
-        this.paymentStatusRepository = paymentStatusRepository;
-        this.courseRepository = courseRepository;
-        this.userRepository = userRepository;
-        this.emailService = emailService;
-    }
+
 
     @Override
     public Payment createPayment(Double total, String currency, PaypalPaymentMethod method,
