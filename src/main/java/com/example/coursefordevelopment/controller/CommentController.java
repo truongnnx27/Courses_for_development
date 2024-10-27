@@ -31,7 +31,7 @@ public class CommentController {
     //Truy xuất comment theo lesson
     @GetMapping("/getCommentLesson/{id}")
     public ResponseEntity<List<UserCommentDto>> getCommentParent(@PathVariable Long id) {
-        return ResponseEntity.ok( commentService.findCommentsByLessonId(id));
+        return ResponseEntity.ok(commentService.findCommentsByLessonId(id));
     }
 
     @PostMapping("/postCommentLesson")
@@ -46,15 +46,13 @@ public class CommentController {
         Comment comment = commentService.putComment(id, commentDto);
         return ResponseEntity.ok(commentMapper.commentToCommentDto(comment));
     }
-
     @DeleteMapping("/deleteComment/{id}")
     public ResponseEntity<CommentDto> deleteComment(@PathVariable Long id) {
         if (commentService.isCommentExist(id)) {
             Comment comment = commentService.findCommentById(id);
             commentService.deleteComment(id);
             return ResponseEntity.ok(commentMapper.commentToCommentDto(comment));
-        }
-        else {
+        } else {
             return ResponseEntity.notFound().build();
         }
     }
