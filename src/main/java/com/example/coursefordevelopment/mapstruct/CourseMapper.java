@@ -20,9 +20,11 @@ public abstract class CourseMapper {
     public static final CourseMapper INSTANCE = Mappers.getMapper(CourseMapper.class);
 
     @Mapping(source = "instructor", target = "instructor", qualifiedByName = "stringToUser")
+    @Mapping(source = "categoryId", target = "category.id")
     public abstract Course toCourse(CourseCreationRequest courseDto);
 
     @Mapping(source = "instructor", target = "instructor", qualifiedByName = "userToUserResponse")
+    @Mapping(source = "category.id", target = "categoryId")
     public abstract CourseResponse toCourseResponse(Course course);
 
     @Named("stringToUser")
