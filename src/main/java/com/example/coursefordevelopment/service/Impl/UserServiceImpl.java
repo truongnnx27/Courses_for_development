@@ -1,7 +1,9 @@
 package com.example.coursefordevelopment.service.Impl;
 
+import com.example.coursefordevelopment.dto.request.UpdatePassWordRequest;
 import com.example.coursefordevelopment.dto.request.UserCreationRequest;
 import com.example.coursefordevelopment.dto.request.UserUpdateRequest;
+import com.example.coursefordevelopment.dto.response.UpdatePassWordResponse;
 import com.example.coursefordevelopment.dto.response.UserResponse;
 import com.example.coursefordevelopment.entity.Role;
 import com.example.coursefordevelopment.entity.User;
@@ -21,6 +23,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -34,30 +38,32 @@ public class UserServiceImpl implements UserService {
     PasswordEncoder passwordEncoder;
 
     @Override
-    public UserResponse getMyInfo(){
+    public UserResponse getMyInfo() {
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
-
-        User user =  userRepository.findByUsername(username).orElseThrow(
+        User user = userRepository.findByUsername(username).orElseThrow(
                 () -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         return userMapper.toUserResponse(user);
     }
 
     @Override
-    public UserResponse createUser(UserCreationRequest request){
+    public UserResponse createUser(UserCreationRequest request) {
         if (userRepository.existsByUsername(request.getUsername()))
             throw new AppException(ErrorCode.USER_EXISTED);
+
+        if (userRepository.existsByEmail(request.getEmail())) throw new AppException(ErrorCode.USER_EXISTED);
 
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-
-        Role defaultRole = roleRepository.findByRoleName("USER")
+        LocalDateTime now = LocalDateTime.now();
+        Role defaultRole = roleRepository.findByRoleName("STUDENT")
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
         user.setRoleEntity(defaultRole);
-
+        user.setCreatedDate(now);
+        user.setActive(false);
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
@@ -67,18 +73,20 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         userMapper.updateUser(user, request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
+
     @Override
-    public void deleteUser(String userId){
+    public void deleteUser(String userId) {
         userRepository.deleteById(userId);
     }
 
     //    @PreAuthorize("hasRole('ADMIN')")
     @Override
-    public List<UserResponse> getUsers(){
+    public List<UserResponse> getUsers() {
         log.info("Get all users");
         return userRepository.findAll().stream()
                 .map(userMapper::toUserResponse).toList();
@@ -86,11 +94,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @PostAuthorize("returnObject.username == authentication.name")
-    public UserResponse getUser(String id){
+    public UserResponse getUser(String id) {
         log.info("Get user with id {}", id);
         return userMapper.toUserResponse(userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
     }
 
+    @Override
+    public void updatePassWord(String email, UpdatePassWordRequest request, boolean vail) {
 
+        if (!vail) {
+            return;
+        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+        System.out.println(user);
+    }
 }

@@ -1,19 +1,26 @@
 package com.example.coursefordevelopment.controller;
 
-import com.example.coursefordevelopment.dto.request.ApiResponse;
-import com.example.coursefordevelopment.dto.request.AuthenticationRequest;
-import com.example.coursefordevelopment.dto.request.IntrospectRequest;
+import com.example.coursefordevelopment.dto.request.*;
 import com.example.coursefordevelopment.dto.response.AuthenticationResponse;
+import com.example.coursefordevelopment.dto.response.EmailResponse;
 import com.example.coursefordevelopment.dto.response.IntrospectResponse;
+import com.example.coursefordevelopment.dto.response.VerifyOtpResponse;
+import com.example.coursefordevelopment.service.EmailService;
 import com.example.coursefordevelopment.service.Impl.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
+import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
+import java.time.LocalDateTime;
 
+@Slf4j
 @RestController
 @RequestMapping("/authentication")
 @RequiredArgsConstructor
@@ -21,9 +28,11 @@ import java.text.ParseException;
 @CrossOrigin("*")
 public class AuthenticationController {
     AuthenticationService authenticationService;
+    EmailService emailService;
+    PasswordEncoder passwordEncoder;
 
     @PostMapping("/token")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request){
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
         var result = authenticationService.authenticate(request);
         return ApiResponse.<AuthenticationResponse>builder()
                 .result(result)
@@ -36,6 +45,41 @@ public class AuthenticationController {
         var result = authenticationService.introspect(request);
         return ApiResponse.<IntrospectResponse>builder()
                 .result(result)
+                .build();
+    }
+
+    @PostMapping("/forgot-password")
+    ApiResponse<EmailResponse> forgotPassword(@RequestBody EmailRequest request) throws MessagingException {
+        String otp = emailService.generateOTP(request.getEmail());
+        emailService.sendOTPEmail(request.getEmail(), otp);
+        return ApiResponse.<EmailResponse>builder()
+                .result(EmailResponse.builder()
+                        .hashedOtp( passwordEncoder.encode(otp))
+                        .creationTime(LocalDateTime.now())
+                        .build())
+                .build();
+    }
+
+    @PostMapping("/verify-otp")
+    public ApiResponse<VerifyOtpResponse> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        LocalDateTime expirationTime = LocalDateTime.now();
+        boolean isOtpValid = emailService.verifyOTP(request.getOtp(), request.getHashedOtp(), request.getCreationTime(), expirationTime);
+        return ApiResponse.<VerifyOtpResponse>builder()
+                .result(VerifyOtpResponse.builder()
+                        .valid(isOtpValid)
+                        .build())
+                .build();
+    }
+
+    @PostMapping("/send-email-creation-user")
+    ApiResponse<EmailResponse> creationUser(@RequestBody EmailRequest request) throws MessagingException {
+        String otp = emailService.generateOTP(request.getEmail());
+        emailService.sendOTPEmailForCreationUser(request.getEmail(),request.getUsername(), otp);
+        return ApiResponse.<EmailResponse>builder()
+                .result(EmailResponse.builder()
+                        .hashedOtp( passwordEncoder.encode(otp))
+                        .creationTime(LocalDateTime.now())
+                        .build())
                 .build();
     }
 }

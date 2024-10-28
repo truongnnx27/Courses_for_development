@@ -51,17 +51,20 @@ public class User {
     String avatarUrl;
 
     @Column(name = "updated_date")
-    LocalDateTime updatedDate;
+    @Builder.Default
+    LocalDateTime updatedDate = LocalDateTime.now();
 
     @Column(name = "created_date")
-    LocalDateTime createdDate;
+    @Builder.Default
+    LocalDateTime createdDate = LocalDateTime.now();
 
     @Version
     @Column(name = "version")
     int version;
 
-    @Column(name = "is_active", length = 255)
-    private String isActive;
+    @Column(name = "is_active")
+    @Builder.Default
+    private boolean isActive = false;
 
     @ManyToOne
     @JoinColumn(name = "role_id")

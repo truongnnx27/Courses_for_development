@@ -67,7 +67,7 @@ public class ApplicationInitConfig {
                         .avatarUrl("http://example.com/avatar.jpg")
                         .createdDate(LocalDateTime.now())
                         .updatedDate(LocalDateTime.now())
-                        .isActive("true")
+                        .isActive(true)
                         .build();
 
 

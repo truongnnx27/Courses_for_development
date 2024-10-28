@@ -25,6 +25,6 @@ public class UserUpdateRequest {
     String avatarUrl;
     LocalDateTime updatedDate;
     LocalDateTime createdDate;
-    String isActive;
+    boolean isActive;
     Role roleEntity;
 }
