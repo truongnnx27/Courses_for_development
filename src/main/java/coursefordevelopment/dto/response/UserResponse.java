@@ -1,4 +1,8 @@
+<<<<<<< HEAD:src/main/java/coursefordevelopment/dto/response/UserResponse.java
 package coursefordevelopment.dto.response;
+=======
+package com.example.coursefordevelopment.dto.response;
+>>>>>>> truongdev:src/main/java/com/example/coursefordevelopment/dto/response/UserResponse.java
 
 import com.example.coursefordevelopment.entity.Role;
 import com.example.coursefordevelopment.enums.Gender;
@@ -25,6 +29,10 @@ public class UserResponse {
     LocalDateTime updatedDate;
     LocalDateTime createdDate;
     int version;
+<<<<<<< HEAD:src/main/java/coursefordevelopment/dto/response/UserResponse.java
     String isActive;
+=======
+    boolean isActive;
+>>>>>>> truongdev:src/main/java/com/example/coursefordevelopment/dto/response/UserResponse.java
     Role roleEntity;
 }

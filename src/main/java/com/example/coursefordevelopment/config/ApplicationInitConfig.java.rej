@@ -1,0 +1,10 @@
+diff a/src/main/java/com/example/coursefordevelopment/config/ApplicationInitConfig.java b/src/main/java/com/example/coursefordevelopment/config/ApplicationInitConfig.java	(rejected hunks)
+@@ -67,7 +67,7 @@
+                         .avatarUrl("http://example.com/avatar.jpg")
+                         .createdDate(LocalDateTime.now())
+                         .updatedDate(LocalDateTime.now())
+-                        .isActive("true")
++                        .isActive(true)
+                         .build();
+ 
+ 

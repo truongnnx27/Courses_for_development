@@ -1,4 +1,8 @@
+<<<<<<< HEAD:src/main/java/coursefordevelopment/entity/Wishlist.java
 package coursefordevelopment.entity;
+=======
+package com.example.coursefordevelopment.entity;
+>>>>>>> truongdev:src/main/java/com/example/coursefordevelopment/entity/Wishlist.java
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
