@@ -22,16 +22,19 @@ public class CourseController {
     }
 
 
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @PostMapping
     public ResponseEntity<CourseResponse> createCourse(@Valid @RequestBody CourseCreationRequest courseCreationRequest) {
         return ResponseEntity.status(HttpStatus.CREATED).body(courseService.createCourse(courseCreationRequest));
     }
 
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @GetMapping
     public ResponseEntity<Page<CourseResponse>> getAllCourses(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(courseService.getAllCourses(page, size));
     }
 
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteCourse(@PathVariable Long id) {
         courseService.deleteCourse(id);

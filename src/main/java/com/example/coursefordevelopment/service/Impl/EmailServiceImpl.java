@@ -2,24 +2,36 @@ package com.example.coursefordevelopment.service.Impl;
 
 import com.example.coursefordevelopment.dto.request.ApprovedCourseRequest;
 import com.example.coursefordevelopment.entity.Course;
+import com.example.coursefordevelopment.exception.AppException;
+import com.example.coursefordevelopment.exception.ErrorCode;
 import com.example.coursefordevelopment.repository.CourseRepository;
+import com.example.coursefordevelopment.repository.UserRepository;
 import com.example.coursefordevelopment.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Random;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
     private final CourseRepository courseRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
 
-    public EmailServiceImpl(JavaMailSender mailSender, CourseRepository courseRepository) {
+    public EmailServiceImpl(JavaMailSender mailSender, CourseRepository courseRepository, PasswordEncoder passwordEncoder, UserRepository userRepository) {
         this.mailSender = mailSender;
         this.courseRepository = courseRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -56,5 +68,32 @@ public class EmailServiceImpl implements EmailService {
         message.setTo(course.getInstructor().getEmail());
         message.setText("Your course: " + course.getTitle() + " has been deleted");
         mailSender.send(message);
+    }
+
+    @Override
+    public String generateOTP(String email) {
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        return otp;
+    }
+
+    @Override
+    public void sendOTPEmail(String email, String otp) throws MessagingException {
+        if (!userRepository.existsByEmail(email))
+            throw new AppException(ErrorCode.USER_EXISTED);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setTo(email);
+        helper.setSubject("OTP Confirmation");
+        helper.setText("Your OTP code is: " + otp, true);
+        mailSender.send(message);
+    }
+
+    @Override
+    public boolean verifyOTP(String request, String encryptedOtp, LocalDateTime creationTime, LocalDateTime expirationTime) {
+        return encryptedOtp != null
+                && passwordEncoder.matches(request, encryptedOtp)
+                && Duration.between(creationTime, expirationTime).getSeconds() <= 30;
+
     }
 }

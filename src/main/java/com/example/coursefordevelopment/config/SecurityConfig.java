@@ -42,7 +42,11 @@ public class SecurityConfig {
                 cors -> cors.configurationSource(corsConfigurationSource())
         );
         httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers("/**").permitAll()
+                request.requestMatchers("/users",
+                                "/authentication/token",
+                                "/authentication/introspect",
+                                "/authentication/forgot-password",
+                                "/authentication/verify-otp").permitAll()
                         .anyRequest().authenticated());
 
         httpSecurity.oauth2ResourceServer(oauth2 ->

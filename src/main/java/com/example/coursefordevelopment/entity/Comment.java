@@ -16,7 +16,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Comment {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,7 +33,7 @@ public class Comment {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "lessons_id")
+    @JoinColumn(name = "lecture_id")
     private Lecture lecture;
 
     @ManyToOne

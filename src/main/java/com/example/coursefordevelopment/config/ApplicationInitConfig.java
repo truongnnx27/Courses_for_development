@@ -67,12 +67,28 @@ public class ApplicationInitConfig {
                         .avatarUrl("http://example.com/avatar.jpg")
                         .createdDate(LocalDateTime.now())
                         .updatedDate(LocalDateTime.now())
-                        .isActive("true")
+                        .isActive(true)
                         .build();
 
 
                 userRepository.save(user);
                 log.warn("Admin user has been created with default password: admin, please change it.");
+            } else if (userRepository.findByUsername("user").isEmpty()) {
+                User user = User.builder()
+                        .username("user")
+                        .password(passwordEncoder.encode("user"))
+                        .email("user@example.com")
+                        .fullname("User")
+                        .birthday(new Date())
+                        .gender(Gender.MALE)
+                        .phone("123456789")
+                        .roleEntity(roleRepository.findByRoleName("STUDENT").get())
+                        .avatarUrl("http://example.com/avatar.jpg")
+                        .createdDate(LocalDateTime.now())
+                        .updatedDate(LocalDateTime.now())
+                        .isActive(true)
+                        .build();
+                userRepository.save(user);
             }
         };
     }

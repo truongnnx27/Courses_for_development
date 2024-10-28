@@ -60,8 +60,8 @@ public class User {
     @Column(name = "version")
     int version;
 
-    @Column(name = "is_active", length = 255)
-    private String isActive;
+    @Column(name = "is_active", columnDefinition = "bit default 0")
+    private boolean isActive;
 
     @ManyToOne
     @JoinColumn(name = "role_id")
