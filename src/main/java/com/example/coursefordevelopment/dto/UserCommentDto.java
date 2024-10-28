@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class UserCommentDto {
     private Long id;
     private String fullName;
-    private Long idUserComment;
+    private String idUserComment;
     private String profilePicture;
     private String commentText;
     private String nameUserReply;

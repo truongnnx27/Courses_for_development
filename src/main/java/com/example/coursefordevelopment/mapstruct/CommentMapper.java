@@ -15,13 +15,13 @@ public interface CommentMapper {
 
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "course.id", target = "courseId")
-    @Mapping(source = "lesson.id", target = "lessonId")
+    @Mapping(source = "lecture.id", target = "lectureId")
     @Mapping(source = "comment.id", target = "commentId")
     CommentDto commentToCommentDto(Comment comment);
 
     @Mapping(source = "userId", target = "user.id")
     @Mapping(source = "courseId", target = "course.id")
-    @Mapping(source = "lessonId", target = "lesson.id")
+    @Mapping(source = "lectureId", target = "lecture.id")
     @Mapping(source = "commentId", target = "comment.id")
     Comment commentDtoToComment(CommentDto commentDto);
 

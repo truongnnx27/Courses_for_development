@@ -2,7 +2,6 @@ package com.example.coursefordevelopment.reponsitory;
 
 import com.example.coursefordevelopment.entity.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -13,17 +12,17 @@ public interface CommentRepository extends JpaRepository<Comment,Long> {
 
     @Query(value = "select " +
             "c.id as id, " +
-            "u.full_name as fullName, " +
+            "u.fullname as fullName, " +
             "u.id as idUserComment, " +
-            "u.profile_picture as profilePicture, " +
+            "u.avatar_url as profilePicture, " +
             "c.comment_text as commentText, " +
-            "userCommentParent.full_name as nameUserReply, " +
+            "userCommentParent.fullname as nameUserReply, " +
             "c.comment_id as parentId " +
             "from comments c " +
             "inner join users u on c.user_id = u.id " +
             "left join comments commentParent on c.comment_id = commentParent.id " +
             "left join users userCommentParent on commentParent.user_id = userCommentParent.id " +
-            "where c.lessons_id = :id", nativeQuery = true)
+            "where c.lecture_id = :id", nativeQuery = true)
     List<Object[]> getCommentLesson(Long id);
 
     @Query("SELECT c from Comment c where c.comment.id = :id")

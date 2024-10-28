@@ -34,8 +34,8 @@ public class Comment {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "lessons_id")
-    private Lesson lesson;
+    @JoinColumn(name = "lecture_id")
+    private Lecture lecture;
 
     @ManyToOne
     @JoinColumn(name = "courses_id")

@@ -17,7 +17,7 @@ public class PaymentStatus {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, columnDefinition = "nvarchar(100)")
     private String statusName;
 
     @OneToMany(mappedBy = "paymentStatus")

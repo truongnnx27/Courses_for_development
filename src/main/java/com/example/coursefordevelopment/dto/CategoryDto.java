@@ -9,6 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CategoryDto {
     private Long id;
-    private String nameTag;
-    private Long courseId; // Chỉ map id của course để tránh lặp vô hạn
+    private String categoryName;
 }

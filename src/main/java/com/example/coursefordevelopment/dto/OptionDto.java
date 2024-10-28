@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OptionDto {
     private Long id;
-    private Long questionId;  // Map ID của Question
-    private String optionText;
-    private boolean isCorrect;
+    private String text;
+    private boolean correct;
 }

@@ -3,21 +3,18 @@ package com.example.coursefordevelopment.service;
 import com.example.coursefordevelopment.dto.CommentDto;
 import com.example.coursefordevelopment.dto.UserCommentDto;
 import com.example.coursefordevelopment.entity.Comment;
-import com.example.coursefordevelopment.entity.Lesson;
+import com.example.coursefordevelopment.entity.Lecture;
 import com.example.coursefordevelopment.entity.User;
 import com.example.coursefordevelopment.mapstruct.CommentMapper;
 import com.example.coursefordevelopment.reponsitory.CommentRepository;
-import com.example.coursefordevelopment.reponsitory.CourseRepository;
-import com.example.coursefordevelopment.reponsitory.LessonRepository;
+import com.example.coursefordevelopment.reponsitory.LectureRepository;
 import com.example.coursefordevelopment.reponsitory.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommentService {
 
-    LessonRepository lessonRepository;
+    LectureRepository lectureRepository;
     CommentMapper commentMapper;
     UserRepository userRepository;
     CommentRepository commentRepository;
@@ -41,11 +38,11 @@ public class CommentService {
             comment.setUser(null);
         }
 
-        if (commentDto.getLessonId() != null) {
-            Lesson lesson = lessonRepository.findById(commentDto.getLessonId()).orElseThrow(() -> new RuntimeException("Not found Lesson"));
-            comment.setLesson(lesson);
+        if (commentDto.getLectureId() != null) {
+            Lecture lecture = lectureRepository.findById(commentDto.getLectureId()).orElseThrow(() -> new RuntimeException("Not found Lesson"));
+            comment.setLecture(lecture);
         } else {
-            comment.setLesson(null);
+            comment.setLecture(null);
         }
 
         if (commentDto.getCommentId() != null) {
@@ -95,7 +92,7 @@ public class CommentService {
                 .map(result -> new UserCommentDto(
                         (Long) result[0],         // id
                         (String) result[1],       // fullName
-                        (Long) result[2],           //idUserComment
+                        (String) result[2],           //idUserComment
                         (String) result[3],       // profilePicture
                         (String) result[4],    // commentText
                         (String) result[5],       // nameUserReply
