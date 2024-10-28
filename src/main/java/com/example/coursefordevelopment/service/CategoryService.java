@@ -3,10 +3,12 @@ package com.example.coursefordevelopment.service;
 import com.example.coursefordevelopment.dto.CategoryDto;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
+
 public interface CategoryService {
-    Page<CategoryDto> getAllCategories(int page, int size);
-    CategoryDto getCategoryById(int id);
+    List<CategoryDto> getAllCategories();
+    CategoryDto getCategoryById(Long id);
     CategoryDto createCategory(CategoryDto categoryDto);
     CategoryDto updateCategory(CategoryDto categoryDto);
-    void deleteCategoryById(int id);
+    void deleteCategoryById(Long id);
 }

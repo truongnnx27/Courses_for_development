@@ -11,6 +11,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+
 @Service
 @AllArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
@@ -19,13 +22,12 @@ public class CategoryServiceImpl implements CategoryService {
     private CategoryMapper categoryMapper;
 
     @Override
-    public Page<CategoryDto> getAllCategories(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return categoryRepository.findAll(pageable).map(categoryMapper::CategoryToCategoryDto);
+    public List<CategoryDto> getAllCategories() {
+        return categoryMapper.ListCategoryToCategoryDtoList(categoryRepository.findAll());
     }
 
     @Override
-    public CategoryDto getCategoryById(int id) {
+    public CategoryDto getCategoryById(Long id) {
         return null;
     }
 
@@ -33,16 +35,22 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto createCategory(CategoryDto categoryDto) {
         Category category = categoryMapper.CategoryDtoToCategory(categoryDto);
         categoryRepository.save(category);
-        return categoryDto;
+        return categoryMapper.CategoryToCategoryDto(category);
     }
 
     @Override
     public CategoryDto updateCategory(CategoryDto categoryDto) {
-        return null;
+        Category category = categoryMapper.CategoryDtoToCategory(categoryDto);
+        categoryRepository.save(category);
+        return categoryMapper.CategoryToCategoryDto(category);
     }
 
     @Override
-    public void deleteCategoryById(int id) {
+    public void deleteCategoryById(Long id) {
+        categoryRepository.deleteById(id);
+    }
 
+    public CategoryDto findCategoryById(Long id) {
+        return categoryMapper.CategoryToCategoryDto(categoryRepository.findById(id).get());
     }
 }

@@ -19,12 +19,25 @@ public class CategoryController {
     }
 
     @GetMapping("/getCategorys")
-    public ResponseEntity<Page<CategoryDto>> getCategorys(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(categoryService.getAllCategories(page, size));
+    public ResponseEntity<List<CategoryDto>> getCategorys(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
     @PostMapping("/postCategory")
     public ResponseEntity<CategoryDto> postCategory(@RequestBody CategoryDto categoryDto) {
         return ResponseEntity.ok(categoryService.createCategory(categoryDto));
+    }
+
+    @DeleteMapping("/deleteCategory/{id}")
+    public ResponseEntity<CategoryDto> deleteCategory(@PathVariable Long id) {
+        CategoryDto categoryDto = categoryService.getCategoryById(id);
+        categoryService.deleteCategoryById(id);
+        return ResponseEntity.ok(categoryDto);
+    }
+
+    @PutMapping("/putCategory/{id}")
+    public ResponseEntity<CategoryDto> updateCategory(@PathVariable Long id, @RequestBody CategoryDto categoryDto) {
+        categoryDto.setId(id);
+        return ResponseEntity.ok(categoryService.updateCategory(categoryDto));
     }
 }
