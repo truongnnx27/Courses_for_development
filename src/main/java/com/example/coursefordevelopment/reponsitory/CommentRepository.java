@@ -23,7 +23,7 @@ public interface CommentRepository extends JpaRepository<Comment,Long> {
             "left join comments commentParent on c.comment_id = commentParent.id " +
             "left join users userCommentParent on commentParent.user_id = userCommentParent.id " +
             "where c.lecture_id = :id", nativeQuery = true)
-    List<Object[]> getCommentLesson(Long id);
+    List<Object[]> getCommentLecture(Long id);
 
     @Query("SELECT c from Comment c where c.comment.id = :id")
     List<Comment> findByReplyId(Long id);

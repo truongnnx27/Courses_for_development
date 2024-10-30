@@ -1,6 +1,7 @@
 package com.example.coursefordevelopment.mapstruct;
 
 import com.example.coursefordevelopment.dto.CommentDto;
+import com.example.coursefordevelopment.dto.response.CommentReponse;
 import com.example.coursefordevelopment.entity.Comment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,19 +14,17 @@ public interface CommentMapper {
 
     CommentMapper INSTANCE = Mappers.getMapper(CommentMapper.class);
 
-    @Mapping(source = "user.id", target = "userId")
-    @Mapping(source = "course.id", target = "courseId")
-    @Mapping(source = "lecture.id", target = "lectureId")
-    @Mapping(source = "comment.id", target = "commentId")
-    CommentDto commentToCommentDto(Comment comment);
-
-    @Mapping(source = "userId", target = "user.id")
+    @Mapping(source = "idUserComment", target = "user.id")
     @Mapping(source = "courseId", target = "course.id")
     @Mapping(source = "lectureId", target = "lecture.id")
-    @Mapping(source = "commentId", target = "comment.id")
-    Comment commentDtoToComment(CommentDto commentDto);
+    @Mapping(source = "parentId", target = "comment.id")
+    Comment commentRepsToComment(CommentReponse commentReponse);
 
-    List<CommentDto> listCommentToListCommentDto(List<Comment> listComment);
+    @Mapping(source = "user.id", target = "idUserComment")
+    @Mapping(source = "course.id", target = "courseId")
+    @Mapping(source = "lecture.id", target = "lectureId")
+    @Mapping(source = "comment.id", target = "parentId")
+    CommentReponse commentToCommentReps(Comment comment);
 
-    List<CommentDto> listCommentDtoListComment(List<CommentDto> listCommentDto);
+
 }

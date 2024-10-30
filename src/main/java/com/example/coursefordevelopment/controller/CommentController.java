@@ -1,59 +1,51 @@
 package com.example.coursefordevelopment.controller;
 
-import com.example.coursefordevelopment.dto.CommentDto;
-import com.example.coursefordevelopment.dto.UserCommentDto;
-import com.example.coursefordevelopment.entity.Comment;
-import com.example.coursefordevelopment.mapstruct.CommentMapper;
+import com.example.coursefordevelopment.dto.request.CommentInLectureReques;
+import com.example.coursefordevelopment.dto.response.CommentReponse;
 import com.example.coursefordevelopment.service.CommentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:8081")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class CommentController {
-
-    CommentMapper commentMapper;
     CommentService commentService;
 
-    //Truy xuát tất cả comment
-    @GetMapping("/getallComment")
-    public ResponseEntity<List<CommentDto>> getallComments() {
-        return ResponseEntity.ok(commentMapper.listCommentToListCommentDto(commentService.findAllComments()));
+    //Truy xuất comment theo lecture
+    @GetMapping("/getCommentLecture/{id}")
+    public ResponseEntity<List<CommentInLectureReques>> getCommentParent(@PathVariable Long id) {
+        return ResponseEntity.ok(commentService.getCommentsInLecture(id));
     }
 
-    //Truy xuất comment theo lesson
-    @GetMapping("/getCommentLesson/{id}")
-    public ResponseEntity<List<UserCommentDto>> getCommentParent(@PathVariable Long id) {
-        return ResponseEntity.ok(commentService.findCommentsByLessonId(id));
+    @MessageMapping("/comments")
+    @SendTo("/topic/comments")
+    public List<CommentInLectureReques> getCommentParent_Socket(Long id) {
+        return commentService.getCommentsInLecture(id);
     }
 
-    @PostMapping("/postCommentLesson")
-    public ResponseEntity<CommentDto> addComment(@RequestBody CommentDto commentDto) {
-        Comment comment = commentService.addComment(commentDto);
-        CommentDto responseDto = commentMapper.commentToCommentDto(comment);
-        return ResponseEntity.ok(responseDto);
+    @PostMapping("/postCommentLecture")
+    public ResponseEntity<CommentReponse> addComment(@RequestBody CommentReponse commentReponse) {
+        return ResponseEntity.ok(commentService.addComment(commentReponse));
     }
 
-    @PutMapping("/putComment/{id}")
-    public ResponseEntity<CommentDto> updateComment(@PathVariable Long id, @RequestBody CommentDto commentDto) {
-        Comment comment = commentService.putComment(id, commentDto);
-        return ResponseEntity.ok(commentMapper.commentToCommentDto(comment));
+    @PutMapping("/putComment")
+    public ResponseEntity<CommentReponse> updateComment(@RequestBody CommentReponse commentReponse) {
+        return ResponseEntity.ok(commentService.updateComment(commentReponse));
     }
+
     @DeleteMapping("/deleteComment/{id}")
-    public ResponseEntity<CommentDto> deleteComment(@PathVariable Long id) {
-        if (commentService.isCommentExist(id)) {
-            Comment comment = commentService.findCommentById(id);
-            commentService.deleteComment(id);
-            return ResponseEntity.ok(commentMapper.commentToCommentDto(comment));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Map<String, String>> deleteComment(@PathVariable Long id) {
+        commentService.deleteComment(id);
+        return ResponseEntity.ok(Map.of("message", "Comment "+id+" deleted successfully"));
     }
 }
