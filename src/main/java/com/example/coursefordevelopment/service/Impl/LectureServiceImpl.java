@@ -55,4 +55,9 @@ public class LectureServiceImpl implements LectureService {
     public void deleteLesson(Long id) {
         lectureRepository.deleteById(id);
     }
+
+    @Override
+    public List<LectureDto> getLessonsBySectionId(Long sectionId) {
+        return lectureMapper.listLectureToListLectureDto(lectureRepository.findBySectionId(sectionId));
+    }
 }

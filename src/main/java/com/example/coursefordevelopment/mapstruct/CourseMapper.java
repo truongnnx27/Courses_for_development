@@ -12,6 +12,8 @@ import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring", uses = {UserMapper.class})
 public abstract class CourseMapper {
     @Autowired
@@ -36,4 +38,9 @@ public abstract class CourseMapper {
     UserResponse userToUserResponse(User user) {
         return UserMapper.INSTANCE.toUserResponse(user);
     }
+
+    @Mapping(source = "instructor", target = "instructor", qualifiedByName = "userToUserResponse")
+    @Mapping(source = "category.id", target = "categoryId")
+    public abstract List<CourseResponse> toCourseResponses(List<Course> courses);
+
 }

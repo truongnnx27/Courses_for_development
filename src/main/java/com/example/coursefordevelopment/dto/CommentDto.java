@@ -18,4 +18,5 @@ public class CommentDto {
     private Long lectureId;
     private Long courseId; // Chỉ map id của Course để tránh lặp
     private Long commentId;
+    private int star;
 }

@@ -10,4 +10,5 @@ public interface LectureService {
     LectureDto createLesson(LectureDto lectureDto);
     LectureDto updateLesson(Long id, LectureDto lectureDto);
     void deleteLesson(Long id);
+    List<LectureDto> getLessonsBySectionId(Long sectionId);
 }

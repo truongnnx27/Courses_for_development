@@ -9,12 +9,12 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CommentInLectureReques {
+public class CommentRequest {
     private Long id;
-    private String fullName;
     private String idUserComment;
-    private String profilePicture;
     private String commentText;
-    private String nameUserReply;
+    private Long lectureId;
+    private Long courseId;
+    private int star;
     private Long parentId;
 }

@@ -1,4 +1,5 @@
 create database cfd;
+use cfd;
 
 INSERT INTO users(id, avatar_url, birthday, created_date, email, fullname, gender, is_active, password, phone, updated_date, username, version, role_id)
 VALUES
@@ -40,7 +41,7 @@ VALUES
 INSERT INTO courses (category_id, cover_image, created_at, description, level, price, title, updated_at, instructor_id, is_published)
 VALUES
     (3, 'cover1.jpg', '2024-01-10', 'Khóa học lập trình Java cơ bản', 'Beginner', 1500000, 'Java Cơ Bản', '2024-01-15', 'user001', 0),
-    (7, 'cover2.jpg', '2024-01-12', 'Khóa học phát triển Web với HTML và CSS', 'Beginner', 1200000, 'HTML & CSS Cơ Bản', '2024-01-16', 'user001', 0),
+    (7, 'cover1.jpg', '2024-01-12', 'Khóa học phát triển Web với HTML và CSS', 'Beginner', 1200000, 'HTML & CSS Cơ Bản', '2024-01-16', 'user001', 0),
     (2, 'cover3.jpg', '2024-02-01', 'Khóa học Python cơ bản cho người mới bắt đầu', 'Beginner', 1800000, 'Python Cơ Bản', '2024-02-05', 'user003', 0),
     (10, 'cover4.jpg', '2024-02-10', 'Khóa học SQL và quản trị cơ sở dữ liệu', 'Intermediate', 2500000, 'SQL & Database', '2024-02-15', 'user001', 0),
     (5, 'cover5.jpg', '2024-03-03', 'Khóa học phát triển ứng dụng Android với Kotlin', 'Intermediate', 3000000, 'Android với Kotlin', '2024-03-08', 'user003', 0),
@@ -322,6 +323,61 @@ VALUES
     ('Tôi rất hài lòng với bài học.', NOW(), 0, NOW(), NULL, NULL, 83, 'user007'),
     ('Cảm ơn vì những thông tin hữu ích.', NOW(), 0, NOW(), NULL, NULL, 84, 'user007');
 
+INSERT INTO comments (comment_text, created_at, star, updated_at, comment_id, courses_id, lecture_id, user_id)
+VALUES
+    ('Khóa học này rất bổ ích và dễ hiểu.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'quockhanh123'),
+    ('Giảng viên dạy nhiệt tình và có kiến thức sâu rộng.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user001'),
+    ('Nội dung khá phù hợp với người mới bắt đầu.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user002'),
+    ('Học xong thấy hiểu rõ hơn nhiều, rất đáng để học.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user003'),
+    ('Khóa học cần cải thiện phần thực hành nhiều hơn.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user004'),
+    ('Bài giảng chi tiết và dễ theo dõi, cảm ơn giảng viên.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user005'),
+    ('Các ví dụ rất sát với thực tế, dễ áp dụng.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user006'),
+    ('Khóa học này phù hợp với những ai muốn học nhanh.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user007'),
+    ('Giảng viên truyền đạt dễ hiểu, không lan man.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user008'),
+    ('Tài liệu rất chi tiết và có thể học lại nhiều lần.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user009'),
+    ('Khóa học rất đáng đồng tiền bát gạo.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'quockhanh123'),
+    ('Các bài giảng dễ hiểu, phù hợp với người mới bắt đầu.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user001'),
+    ('Khóa học khá cơ bản, phù hợp cho người mới.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user002'),
+    ('Có nhiều bài tập thực hành giúp nắm vững kiến thức.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user003'),
+    ('Mong khóa học có thêm phần nâng cao hơn.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user004'),
+    ('Giảng viên rất tận tâm và giảng dạy dễ hiểu.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user005'),
+    ('Nội dung khá ổn nhưng hơi ngắn.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user006'),
+    ('Khóa học có nhiều ví dụ hay và dễ hiểu.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user007'),
+    ('Giúp tôi hiểu rõ hơn về các khái niệm cơ bản.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user008'),
+    ('Tôi thấy hài lòng sau khi học khóa học này.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user009'),
+    ('Cảm thấy kiến thức được hệ thống rất tốt.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'quockhanh123'),
+    ('Rất khuyến khích các bạn mới nên học khóa này.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user001'),
+    ('Khóa học giúp nâng cao kỹ năng rất nhiều.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user002'),
+    ('Học xong có thể áp dụng ngay vào thực tế.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user003'),
+    ('Giáo trình rất logic và dễ theo dõi.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user004'),
+    ('Tôi sẽ giới thiệu khóa học này cho bạn bè.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user005'),
+    ('Đây là khóa học rất tốt, không có gì để chê.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user006'),
+    ('Khóa học giúp tôi hiểu rõ hơn về lĩnh vực này.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user007'),
+    ('Tôi đã học được nhiều kiến thức mới từ khóa học.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user008'),
+    ('Khóa học mang lại giá trị rất lớn.', NOW(), FLOOR(RAND() * 5) + 1, NOW(), NULL, FLOOR(RAND() * (59 - 31 + 1)) + 31, NULL, 'user009');
+
+INSERT INTO payments (amount, enrollment, payment_date, course_id, payment_status_id, user_id)
+VALUES
+    (100.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'quockhanh123'),
+    (150.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user001'),
+    (200.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user002'),
+    (250.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user003'),
+    (300.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user004'),
+    (350.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user005'),
+    (400.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user006'),
+    (450.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user007'),
+    (500.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user008'),
+    (550.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user009'),
+    (600.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'quockhanh123'),
+    (650.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user001'),
+    (700.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user002'),
+    (750.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user003'),
+    (800.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user004'),
+    (850.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user005'),
+    (900.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user006'),
+    (950.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user007'),
+    (1000.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user008'),
+    (1050.00, FLOOR(RAND() * 2), NOW(), FLOOR(RAND() * (59 - 31 + 1)) + 31, FLOOR(RAND() * (3 - 1 + 1)) + 1, 'user009');
 
 select
     c.id as id,
@@ -334,4 +390,45 @@ select
 from comments c
 inner join users u on c.user_id = u.id
 left join comments commentParent on c.comment_id = commentParent.id
-left join users userCommentParent on commentParent.user_id = userCommentParent.id
+left join users userCommentParent on commentParent.user_id = userCommentParent.id;
+
+select
+    cate.category_name as categoryName,
+    cate.cover_image as coverImage,
+    count(u.id) as numberUser
+from categories cate
+inner join courses cou on cou.category_id = cate.id
+inner join users u on u.id = cou.instructor_id
+group by cate.category_name, cate.cover_image
+order by numberUser desc;
+
+select
+	cou.id,
+    cou.cover_image,
+    cou.title,
+    count(pay.user_id) as userPayment,
+    u.id as idIntructor,
+    u.fullname as fullNameIntructor
+from courses cou
+inner join payments pay on cou.id = pay.course_id
+inner join users u on cou.instructor_id = u.id
+where pay.enrollment = true
+group by cou.id
+order by  userPayment desc LIMIT 6;
+
+select
+    u.id,
+    u.fullname,
+    u.avatar_url,
+    count(us.id) as numberUserPayment
+from users u
+inner join courses cou on u.id = cou.instructor_id
+inner join payments pay on cou.id = pay.course_id
+inner join users us on us.id = pay.user_id
+where pay.enrollment = true
+group by u.id, u.fullname, u.avatar_url
+order by numberUserPayment desc
+
+
+
+select cover_image, description from courses

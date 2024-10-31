@@ -5,6 +5,8 @@ import com.example.coursefordevelopment.entity.Section;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
+import java.util.List;
+
 @Mapper
 public interface SectionMapper {
     SectionMapper INSTANCE = Mappers.getMapper(SectionMapper.class);
@@ -12,4 +14,6 @@ public interface SectionMapper {
     SectionDto sectionToSectionDto(Section section);
 
     Section sectionDtoToSection(SectionDto sectionDto);
+
+    List<SectionDto> sectionsToSectionDtos(List<Section> sections);
 }

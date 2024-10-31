@@ -1,7 +1,9 @@
 package com.example.coursefordevelopment.service.Impl;
 
-import com.example.coursefordevelopment.dto.request.CommentInLectureReques;
-import com.example.coursefordevelopment.dto.response.CommentReponse;
+import com.example.coursefordevelopment.dto.CommentDto;
+import com.example.coursefordevelopment.dto.response.CommentInCourseResponse;
+import com.example.coursefordevelopment.dto.response.CommentInLectureResponse;
+import com.example.coursefordevelopment.dto.request.CommentRequest;
 import com.example.coursefordevelopment.entity.Comment;
 import com.example.coursefordevelopment.entity.Course;
 import com.example.coursefordevelopment.entity.Lecture;
@@ -17,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,32 +32,32 @@ public class CommentServiceImpl implements CommentService {
     CommentRepository commentRepository;
     CourseRepository courseRepository;
     @Override
-    public CommentReponse addComment(CommentReponse commentReponse) {
+    public CommentRequest addComment(CommentRequest commentRequest) {
 
-        Comment comment = commentMapper.commentRepsToComment(commentReponse);
-        if (commentReponse.getIdUserComment() != null) {
-            User user = userRepository.findById(commentReponse.getIdUserComment()).orElseThrow(() -> new RuntimeException("Not found User"));
+        Comment comment = commentMapper.commentRepsToComment(commentRequest);
+        if (commentRequest.getIdUserComment() != null) {
+            User user = userRepository.findById(commentRequest.getIdUserComment()).orElseThrow(() -> new RuntimeException("Not found User"));
             comment.setUser(user);
         } else {
             comment.setUser(null);
         }
 
-        if (commentReponse.getLectureId() != null) {
-            Lecture lecture = lectureRepository.findById(commentReponse.getLectureId()).orElseThrow(() -> new RuntimeException("Not found Lesson"));
+        if (commentRequest.getLectureId() != null) {
+            Lecture lecture = lectureRepository.findById(commentRequest.getLectureId()).orElseThrow(() -> new RuntimeException("Not found Lesson"));
             comment.setLecture(lecture);
         } else {
             comment.setLecture(null);
         }
 
-        if (commentReponse.getParentId() != null) {
-            Comment reply = commentRepository.findById(commentReponse.getParentId()).orElseThrow(() -> new RuntimeException("Not found Reply"));
+        if (commentRequest.getParentId() != null) {
+            Comment reply = commentRepository.findById(commentRequest.getParentId()).orElseThrow(() -> new RuntimeException("Not found Reply"));
             comment.setComment(reply);
         } else {
             comment.setComment(null);
         }
 
-        if(commentReponse.getCourseId() != null) {
-            Course course = courseRepository.findById(commentReponse.getCourseId()).orElseThrow(() -> new RuntimeException("Not found Course"));
+        if(commentRequest.getCourseId() != null) {
+            Course course = courseRepository.findById(commentRequest.getCourseId()).orElseThrow(() -> new RuntimeException("Not found Course"));
         } else {
             comment.setCourse(null);
         }
@@ -66,31 +67,31 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentReponse updateComment(CommentReponse commentReponse) {
-        Comment comment = commentMapper.commentRepsToComment(commentReponse);
-        if (commentReponse.getIdUserComment() != null) {
-            User user = userRepository.findById(commentReponse.getIdUserComment()).orElseThrow(() -> new RuntimeException("Not found User"));
+    public CommentRequest updateComment(CommentRequest commentRequest) {
+        Comment comment = commentMapper.commentRepsToComment(commentRequest);
+        if (commentRequest.getIdUserComment() != null) {
+            User user = userRepository.findById(commentRequest.getIdUserComment()).orElseThrow(() -> new RuntimeException("Not found User"));
             comment.setUser(user);
         } else {
             comment.setUser(null);
         }
 
-        if (commentReponse.getLectureId() != null) {
-            Lecture lecture = lectureRepository.findById(commentReponse.getLectureId()).orElseThrow(() -> new RuntimeException("Not found Lesson"));
+        if (commentRequest.getLectureId() != null) {
+            Lecture lecture = lectureRepository.findById(commentRequest.getLectureId()).orElseThrow(() -> new RuntimeException("Not found Lesson"));
             comment.setLecture(lecture);
         } else {
             comment.setLecture(null);
         }
 
-        if (commentReponse.getParentId() != null) {
-            Comment reply = commentRepository.findById(commentReponse.getParentId()).orElseThrow(() -> new RuntimeException("Not found Reply"));
+        if (commentRequest.getParentId() != null) {
+            Comment reply = commentRepository.findById(commentRequest.getParentId()).orElseThrow(() -> new RuntimeException("Not found Reply"));
             comment.setComment(reply);
         } else {
             comment.setComment(null);
         }
 
-        if(commentReponse.getCourseId() != null) {
-            Course course = courseRepository.findById(commentReponse.getCourseId()).orElseThrow(() -> new RuntimeException("Not found Course"));
+        if(commentRequest.getCourseId() != null) {
+            Course course = courseRepository.findById(commentRequest.getCourseId()).orElseThrow(() -> new RuntimeException("Not found Course"));
         } else {
             comment.setCourse(null);
         }
@@ -99,10 +100,10 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<CommentInLectureReques> getCommentsInLecture(long lectureId) {
+    public List<CommentInLectureResponse> getCommentsInLecture(long lectureId) {
         List<Object[]> results = commentRepository.getCommentLecture(lectureId);
-        List<CommentInLectureReques> comments = results.stream()
-                .map(result -> new CommentInLectureReques(
+        List<CommentInLectureResponse> comments = results.stream()
+                .map(result -> new CommentInLectureResponse(
                         (Long) result[0],         // id
                         (String) result[1],       // fullName
                         (String) result[2],           //idUserComment
@@ -113,6 +114,27 @@ public class CommentServiceImpl implements CommentService {
                 ))
                 .collect(Collectors.toList());
         return comments;
+    }
+
+    @Override
+    public List<CommentInCourseResponse> getCommentInCourse(long courseId) {
+        return commentsToCommentDtosStream(commentRepository.findCommentsByCourse_Id(courseId));
+    }
+
+
+    public List<CommentInCourseResponse> commentsToCommentDtosStream(List<Comment> comments) {
+        return comments.stream().map(comment -> {
+            CommentInCourseResponse response = new CommentInCourseResponse();
+            response.setUserId(comment.getUser().getId());
+            response.setCourseId(comment.getCourse().getId());
+            response.setProfilePicture(comment.getUser().getAvatarUrl());
+            response.setFullName(comment.getUser().getFullname());
+            response.setCommentText(comment.getCommentText());
+            response.setId(comment.getId());
+            response.setStar(comment.getStar());
+            // Thêm các trường khác nếu cần
+            return response;
+        }).collect(Collectors.toList());
     }
 
     @Override

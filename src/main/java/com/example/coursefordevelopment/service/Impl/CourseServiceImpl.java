@@ -1,6 +1,7 @@
 package com.example.coursefordevelopment.service.Impl;
 
 import com.example.coursefordevelopment.dto.request.CourseCreationRequest;
+import com.example.coursefordevelopment.dto.response.CourseBestSaleResponse;
 import com.example.coursefordevelopment.dto.response.CourseResponse;
 import com.example.coursefordevelopment.entity.*;
 import com.example.coursefordevelopment.mapstruct.CourseMapper;
@@ -8,10 +9,16 @@ import com.example.coursefordevelopment.reponsitory.CourseRepository;
 import com.example.coursefordevelopment.reponsitory.UserRepository;
 import com.example.coursefordevelopment.service.CourseService;
 import com.example.coursefordevelopment.service.EmailService;
+import com.example.coursefordevelopment.service.ImageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -20,12 +27,14 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final ImageService imageService;
 
-    public CourseServiceImpl(CourseRepository courseRepository, CourseMapper courseMapper, UserRepository userRepository, EmailService emailService) {
+    public CourseServiceImpl(CourseRepository courseRepository, CourseMapper courseMapper, UserRepository userRepository, EmailService emailService, ImageService imageService) {
         this.courseRepository = courseRepository;
         this.courseMapper = courseMapper;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.imageService = imageService;
     }
 
     @Override
@@ -70,8 +79,6 @@ public class CourseServiceImpl implements CourseService {
         return courseMapper.toCourseResponse(course);
     }
 
-
-
     @Override
     public Page<CourseResponse> getAllCourses(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -97,4 +104,49 @@ public class CourseServiceImpl implements CourseService {
         emailService.sendEmailDeleteCourse(id);
         courseRepository.deleteById(id);
     }
+
+    @Override
+    public List<CourseResponse> getNewCourses() {
+        Pageable pageable = PageRequest.of(0, 6);
+        List<Course> courses = courseRepository.find6NewCourse(pageable);
+        courses.forEach( course -> {
+            try {
+                String base64Image = imageService.base64Image(course.getCoverImage(), "src/main/resources/static/images/");
+                course.setCoverImage(base64Image);
+            } catch (IOException e) {
+                course.setCoverImage("");
+            }
+        });
+        return courseMapper.toCourseResponses(courses);
+    }
+
+    @Override
+    public List<CourseBestSaleResponse> getCourseBestSale() {
+        List<Object[]> results = courseRepository.findCourseBestSale();
+        List<CourseBestSaleResponse> courseBestSaleResponses = results.stream()
+                .map(result -> new CourseBestSaleResponse(
+                        (Long) result[0],
+                        (String) result[1],
+                        (String) result[2],
+                        (Long) result[3],
+                        (String) result[4],
+                        (String) result[5],
+                        (Long) result[0]
+                )).collect(Collectors.toList());
+        courseBestSaleResponses.forEach(courseBestSaleResponse -> {
+            courseBestSaleResponse.setNumberSection(numberSection(courseBestSaleResponse.getId()));
+            try {
+                courseBestSaleResponse.setCoverImage(imageService.base64Image(courseBestSaleResponse.getCoverImage(), "src/main/resources/static/images/"));
+            } catch (IOException e) {
+                courseBestSaleResponse.setCoverImage("");
+            }
+
+        });
+        return courseBestSaleResponses;
+    }
+
+    private Long numberSection(Long courseId){
+        return Long.valueOf(getCourseById(courseId).getSections().size());
+    }
+
 }

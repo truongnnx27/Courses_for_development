@@ -5,16 +5,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CommentReponse {
+public class CommentInCourseResponse {
     private Long id;
-    private String idUserComment;
+    private String fullName;
+    private String userId;
+    private String profilePicture;
     private String commentText;
-    private Long lectureId;
     private Long courseId;
     private int star;
-    private Long parentId;
 }

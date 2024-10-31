@@ -29,7 +29,7 @@ public class SecurityConfig {
 
     private final String[] PUBLIC_ENDPOINTS = {"/users",
             "/authentication/token", "/authentication/introspect",
-            "/courses", "/api/v1/courses/**", "/lectures", "/lectures/**", "/api/s3/upload"
+            "/courses", "/api/v1/courses/**", "/lectures", "/lectures/**", "/api/s3/upload", "/ws/**"
     };
 
     @Value("${jwt.signerKey}")
@@ -84,12 +84,13 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("*"); // Chỉ định frontend URL
+        configuration.addAllowedOrigin("http://localhost:8081"); // Chỉ định frontend URL
         configuration.addAllowedMethod("POST"); // Cho phép phương thức POST
         configuration.addAllowedMethod("GET");
         configuration.addAllowedMethod("PUT");
         configuration.addAllowedMethod("DELETE");
         configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true); // Bật cho phép gửi cookie
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -1,7 +1,9 @@
 package com.example.coursefordevelopment.controller;
 
-import com.example.coursefordevelopment.dto.request.CommentInLectureReques;
-import com.example.coursefordevelopment.dto.response.CommentReponse;
+import com.example.coursefordevelopment.dto.CommentDto;
+import com.example.coursefordevelopment.dto.response.CommentInCourseResponse;
+import com.example.coursefordevelopment.dto.response.CommentInLectureResponse;
+import com.example.coursefordevelopment.dto.request.CommentRequest;
 import com.example.coursefordevelopment.service.CommentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,24 +25,30 @@ public class CommentController {
 
     //Truy xuất comment theo lecture
     @GetMapping("/getCommentLecture/{id}")
-    public ResponseEntity<List<CommentInLectureReques>> getCommentParent(@PathVariable Long id) {
+    public ResponseEntity<List<CommentInLectureResponse>> getCommentParent(@PathVariable Long id) {
         return ResponseEntity.ok(commentService.getCommentsInLecture(id));
+    }
+
+    @GetMapping("/getCommentCourse/{id}")
+    public ResponseEntity<List<CommentInCourseResponse>> getCommentCourse(@PathVariable Long id) {
+        return ResponseEntity.ok(commentService.getCommentInCourse(id));
+    }
+
+
+    @PostMapping("/postCommentLecture")
+    public ResponseEntity<CommentRequest> addComment(@RequestBody CommentRequest commentRequest) {
+        return ResponseEntity.ok(commentService.addComment(commentRequest));
     }
 
     @MessageMapping("/comments")
     @SendTo("/topic/comments")
-    public List<CommentInLectureReques> getCommentParent_Socket(Long id) {
-        return commentService.getCommentsInLecture(id);
-    }
-
-    @PostMapping("/postCommentLecture")
-    public ResponseEntity<CommentReponse> addComment(@RequestBody CommentReponse commentReponse) {
-        return ResponseEntity.ok(commentService.addComment(commentReponse));
+    public CommentRequest postComment(@RequestBody CommentRequest commentRequest) {
+        return commentService.addComment(commentRequest);
     }
 
     @PutMapping("/putComment")
-    public ResponseEntity<CommentReponse> updateComment(@RequestBody CommentReponse commentReponse) {
-        return ResponseEntity.ok(commentService.updateComment(commentReponse));
+    public ResponseEntity<CommentRequest> updateComment(@RequestBody CommentRequest commentRequest) {
+        return ResponseEntity.ok(commentService.updateComment(commentRequest));
     }
 
     @DeleteMapping("/deleteComment/{id}")

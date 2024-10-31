@@ -2,6 +2,7 @@ package com.example.coursefordevelopment.service.Impl;
 
 import com.example.coursefordevelopment.dto.request.UserCreationRequest;
 import com.example.coursefordevelopment.dto.request.UserUpdateRequest;
+import com.example.coursefordevelopment.dto.response.TopIntructorResponse;
 import com.example.coursefordevelopment.dto.response.UserResponse;
 import com.example.coursefordevelopment.entity.Role;
 import com.example.coursefordevelopment.entity.User;
@@ -10,6 +11,7 @@ import com.example.coursefordevelopment.exception.ErrorCode;
 import com.example.coursefordevelopment.mapstruct.UserMapper;
 import com.example.coursefordevelopment.reponsitory.RoleRepository;
 import com.example.coursefordevelopment.reponsitory.UserRepository;
+import com.example.coursefordevelopment.service.ImageService;
 import com.example.coursefordevelopment.service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +22,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class UserServiceImpl implements UserService {
     RoleRepository roleRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    private final ImageService imageService;
 
     @Override
     public UserResponse getMyInfo(){
@@ -73,6 +79,26 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(String userId){
         userRepository.deleteById(userId);
+    }
+
+    @Override
+    public List<TopIntructorResponse> topIntructor() {
+        List<Object[]> results = userRepository.findTopIntructor();
+        List<TopIntructorResponse> topIntructorResponses = results.stream()
+                .map(result -> new TopIntructorResponse(
+                        (String) result[0],
+                        (String) result[1],
+                        (String) result[2],
+                        (Long) result[3]
+                )).collect(Collectors.toList());
+        topIntructorResponses.forEach(topIntructorResponse -> {
+            try {
+                topIntructorResponse.setAvatarUrl(imageService.base64Image(topIntructorResponse.getAvatarUrl(), "src/main/resources/static/avatars/"));
+            } catch (IOException e) {
+                topIntructorResponse.setAvatarUrl("");
+            }
+        });
+        return topIntructorResponses;
     }
 
     //    @PreAuthorize("hasRole('ADMIN')")

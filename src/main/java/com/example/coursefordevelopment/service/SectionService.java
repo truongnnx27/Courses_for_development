@@ -10,4 +10,5 @@ public interface SectionService {
     List<SectionDto> getAllSections();
     SectionDto updateSection(Long id, SectionDto sectionDto);
     void deleteSection(Long id);
+    List<SectionDto> getSectionsByCourseId(Long courseId);
 }

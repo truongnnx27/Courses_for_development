@@ -2,17 +2,18 @@ package com.example.coursefordevelopment.service.Impl;
 
 
 import com.example.coursefordevelopment.dto.CategoryDto;
+import com.example.coursefordevelopment.dto.response.CategoryResponse;
 import com.example.coursefordevelopment.entity.Category;
 import com.example.coursefordevelopment.mapstruct.CategoryMapper;
 import com.example.coursefordevelopment.reponsitory.CategoryRepository;
 import com.example.coursefordevelopment.service.CategoryService;
+import com.example.coursefordevelopment.service.ImageService;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -20,6 +21,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     private CategoryRepository categoryRepository;
     private CategoryMapper categoryMapper;
+    private ImageService imageService;
 
     @Override
     public List<CategoryDto> getAllCategories() {
@@ -48,6 +50,25 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategoryById(Long id) {
         categoryRepository.deleteById(id);
+    }
+
+    @Override
+    public List<CategoryResponse> getCategoriesNumberUser() {
+        List<Object[]> results = categoryRepository.finnCateNumberUser();
+        List<CategoryResponse> categoryResponses = results.stream()
+                .map(result -> new CategoryResponse(
+                    (String) result[0],
+                    (String) result[1],
+                    (Long) result[2]
+                )).collect(Collectors.toList());
+        categoryResponses.forEach( categoryResponse -> {
+            try {
+                categoryResponse.setCoverImage(imageService.base64Image(categoryResponse.getCoverImage(), "src/main/resources/static/images/"));
+            } catch (IOException e) {
+                categoryResponse.setCoverImage("");
+            }
+        });
+        return categoryResponses;
     }
 
     public CategoryDto findCategoryById(Long id) {

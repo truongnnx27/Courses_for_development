@@ -51,4 +51,9 @@ public class SectionServiceImpl implements SectionService {
     public void deleteSection(Long id) {
         sectionRepository.deleteById(id);
     }
+
+    @Override
+    public List<SectionDto> getSectionsByCourseId(Long courseId) {
+        return sectionMapper.sectionsToSectionDtos(sectionRepository.findByCourse_Id(courseId));
+    }
 }

@@ -17,5 +17,7 @@ public class Category {
 
     @Column(name = "category_name",columnDefinition = "nvarchar(100)")
     private String categoryName;
+
+    private String coverImage;
 }
 
