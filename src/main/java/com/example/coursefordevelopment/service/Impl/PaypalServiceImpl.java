@@ -16,6 +16,7 @@ import com.paypal.base.rest.APIContext;
 import com.paypal.base.rest.PayPalRESTException;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -40,8 +41,6 @@ public class PaypalServiceImpl implements PaypalService {
     @Autowired
     private EmailService emailService;
     private static final double EXCHANGE_RATE = 25000;
-
-
 
     @Override
     public Payment createPayment(Double total, String currency, PaypalPaymentMethod method,
@@ -91,9 +90,9 @@ public class PaypalServiceImpl implements PaypalService {
         validateProcessPaymentParameters(price, courseId, userId);
 
         Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
+                .orElseThrow(() -> new RuntimeException("Khóa học không tồn tại"));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
 
         BigDecimal amountUSD = BigDecimal.valueOf(price).divide(BigDecimal.valueOf(EXCHANGE_RATE), 2, RoundingMode.HALF_UP);
         String cancelUrl = "http://localhost:8081/api/payments/paypal/cancel";
@@ -101,30 +100,30 @@ public class PaypalServiceImpl implements PaypalService {
 
         Payment payment = createPayment(amountUSD.doubleValue(), "USD",
                 PaypalPaymentMethod.paypal, PaypalPaymentIntent.sale,
-                "Order description", cancelUrl, successUrl);
+                "Mô tả đơn hàng", cancelUrl, successUrl);
 
         PaymentDto paymentDto = createPaymentDto(payment, course, user, price);
         paymentRepository.save(createNewPayment(paymentDto));
 
         return findApprovalLink(payment)
-                .orElseThrow(() -> new RuntimeException("Payment link not found."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy liên kết thanh toán."));
     }
 
     private void validatePaymentParameters(Double total, String currency, PaypalPaymentMethod method, PaypalPaymentIntent intent) {
         if (total == null || currency == null || method == null || intent == null) {
-            throw new IllegalArgumentException("Invalid payment parameters.");
+            throw new IllegalArgumentException("Tham số thanh toán không hợp lệ.");
         }
     }
 
     private void validateExecutionParameters(String paymentId, String payerId) {
         if (paymentId == null || payerId == null) {
-            throw new IllegalArgumentException("Payment ID and Payer ID cannot be null.");
+            throw new IllegalArgumentException("ID thanh toán và ID người trả không được để trống.");
         }
     }
 
     private void validateProcessPaymentParameters(Double price, Long courseId, String userId) {
         if (price == null || courseId == null || userId == null) {
-            throw new IllegalArgumentException("Price, courseId, and userId must not be null.");
+            throw new IllegalArgumentException("Giá, khóa học ID, và người dùng ID không được để trống.");
         }
     }
 
@@ -140,9 +139,12 @@ public class PaypalServiceImpl implements PaypalService {
         newPayment.setPaymentId(paymentDTO.getPaymentId());
         newPayment.setPrice(paymentDTO.getPrice());
         newPayment.setPaymentDate(paymentDTO.getPaymentDate());
-        newPayment.setUser(userRepository.findById(paymentDTO.getUserId()).orElseThrow(() -> new RuntimeException("User not found")));
-        newPayment.setCourse(courseRepository.findById(paymentDTO.getCourseId()).orElseThrow(() -> new RuntimeException("Course not found")));
-        newPayment.setPaymentStatus(paymentStatusRepository.findById(paymentDTO.getPaymentStatusId()).orElseThrow(() -> new RuntimeException("Payment status not found")));
+        newPayment.setUser(userRepository.findById(paymentDTO.getUserId())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại")));
+        newPayment.setCourse(courseRepository.findById(paymentDTO.getCourseId())
+                .orElseThrow(() -> new RuntimeException("Khóa học không tồn tại")));
+        newPayment.setPaymentStatus(paymentStatusRepository.findById(paymentDTO.getPaymentStatusId())
+                .orElseThrow(() -> new RuntimeException("Trạng thái thanh toán không tồn tại")));
         newPayment.setEnrollment(paymentDTO.isEnrollment());
         return newPayment;
     }
@@ -155,23 +157,31 @@ public class PaypalServiceImpl implements PaypalService {
                 user.getId(),
                 course.getId(),
                 3L, // Trạng thái đang tiến hành
-                true // Đánh dấu đã đăng ký
+                false // Đánh dấu đã đăng ký
         );
     }
 
     private String buildSuccessUrl(Long courseId, String userId, Double price) {
-        return String.format("http://localhost:8081/api/payments/paypal/success?courseId=%d&userId=%s&price=%.2f", courseId, userId, price);
+        return String.format("http://localhost:8080/api/payments/paypal/success?courseId=%d&userId=%s&price=%.2f", courseId, userId, price);
     }
 
     @Override
     public void updatePaymentStatus(String paymentId, long statusId) {
         com.example.coursefordevelopment.entity.Payment payment = paymentRepository.findByPaymentId(paymentId)
-                .orElseThrow(() -> new RuntimeException("Payment not found for paymentId: " + paymentId));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thanh toán cho paymentId: " + paymentId));
+
+        // Cập nhật trạng thái thanh toán
         payment.setPaymentStatus(paymentStatusRepository.findById(statusId)
-                .orElseThrow(() -> new RuntimeException("Payment status not found")));
+                .orElseThrow(() -> new RuntimeException("Trạng thái thanh toán không tồn tại")));
+
+        // Nếu trạng thái thanh toán là Completed
+//        if (statusId == 1L) {
+//            payment.setEnrollment(true); // Đặt enrollment thành true
+//        } else {
+//            payment.setEnrollment(false); // Đặt enrollment thành false nếu không phải Completed
+//        }
         paymentRepository.save(payment);
     }
-
     public String getUserEmailById(String userId) {
         Optional<User> user = userRepository.findById(userId);
         return user.map(User::getEmail).orElse(null);
@@ -179,18 +189,39 @@ public class PaypalServiceImpl implements PaypalService {
 
     @Override
     public void sendPaymentConfirmationEmail(String emailAddress, String paymentId, Double price) throws MessagingException {
-        String subject = "Payment Confirmation";
+        String subject = "Xác Nhận Thanh Toán";
         String body = String.format(
                 "<html><body>" +
-                        "<h1>Payment Confirmation</h1>" +
-                        "<p>Your payment has been successfully processed.</p>" +
+                        "<h1>Xác Nhận Thanh Toán</h1>" +
+                        "<p>Thanh toán của bạn đã được xử lý thành công.</p>" +
                         "<ul>" +
-                        "<li><strong>Payment ID:</strong> %s</li>" +
-                        "<li><strong>Amount:</strong> %.2f VND</li>" +
+                        "<li><strong>ID Thanh Toán:</strong> %s</li>" +
+                        "<li><strong>Số Tiền:</strong> %.2f VND</li>" +
                         "</ul>" +
                         "</body></html>", paymentId, price
         );
 
         emailService.sendEmail(emailAddress, subject, body);
+    }
+
+    @Override
+    public void cancelPayment(String paymentId) {
+        com.example.coursefordevelopment.entity.Payment payment = paymentRepository.findByPaymentId(paymentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thanh toán cho paymentId: " + paymentId));
+
+        // Đặt trạng thái thanh toán là Failed (Thất bại) khi hủy
+        payment.setPaymentStatus(paymentStatusRepository.findById(2L) // 2L là mã trạng thái Failed
+                .orElseThrow(() -> new RuntimeException("Trạng thái thanh toán không tồn tại")));
+        payment.setEnrollment(false); // Đặt enrollment thành false
+        paymentRepository.save(payment);
+    }
+    @Scheduled(fixedRate = 60000) // Kiểm tra mỗi phút
+    public void checkPendingPayments() {
+        LocalDateTime oneMinuteAgo = LocalDateTime.now().minusMinutes(1);
+        List<com.example.coursefordevelopment.entity.Payment> pendingPayments = paymentRepository.findAllByPaymentStatusId( 3L); // 3L là mã trạng thái "Pending"
+
+        for (com.example.coursefordevelopment.entity.Payment payment : pendingPayments) {
+            updatePaymentStatus(payment.getPaymentId(), 2L); // 2L là mã trạng thái "Failed"
+        }
     }
 }

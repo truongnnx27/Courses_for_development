@@ -32,6 +32,7 @@ public class Payment {
     @Column(name = "enrollment", columnDefinition = "bit")
     private Boolean enrollment;
     private String paymentId;
+
     @ManyToOne
     @JoinColumn(name = "payment_status_id")
     private PaymentStatus paymentStatus;

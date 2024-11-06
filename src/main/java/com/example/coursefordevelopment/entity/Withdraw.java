@@ -1,6 +1,7 @@
 package com.example.coursefordevelopment.entity;
 
 
+import com.example.coursefordevelopment.enums.WithdrawStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,8 +24,9 @@ public class Withdraw {
     @JoinColumn(name = "user_id")
     private User user;
 
-    private BigDecimal amount;
+    private BigDecimal price;
     private LocalDateTime requestDate = LocalDateTime.now();
-    private String token; // Mã xác minh
-
+    private String otp;
+    @Enumerated(EnumType.STRING) // Để lưu enum dưới dạng chuỗi
+    private WithdrawStatus status = WithdrawStatus.PENDING; // Mặc định là PENDING
 }

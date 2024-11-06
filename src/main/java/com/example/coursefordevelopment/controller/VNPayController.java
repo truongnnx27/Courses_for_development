@@ -28,15 +28,21 @@ public class VNPayController {
 
     @GetMapping("/success")
     public void successPay(HttpServletRequest request, HttpServletResponse response,
-                           @RequestParam(value = "vnp_TxnRef") String transactionNo) throws MessagingException {
-        vnPayService.successPay(request, transactionNo);
+                           @RequestParam(value = "vnp_TxnRef") String transactionNo,
+                           @RequestParam(value = "courseId") Long courseId) throws MessagingException {
+
+        // Xử lý thanh toán thành công
+        vnPayService.successPay(request, transactionNo); // Gọi service để xử lý thanh toán
+
         try {
-            response.sendRedirect("http://localhost:8080/vue/payment-success");
+            // Tạo URL chuyển hướng đến trang xác nhận ghi danh
+            String redirectUrl = String.format("http://localhost:8081/vue/enrollment-confirmation?courseId=%d&paymentId=%s",
+                    courseId, transactionNo);
+            response.sendRedirect(redirectUrl); // Chuyển hướng đến trang xác nhận
         } catch (IOException e) {
-            // Xử lý lỗi chuyển hướng
+            e.printStackTrace();
         }
     }
-
     @GetMapping("/cancel")
     public ResponseEntity<String> cancelPay() {
         return ResponseEntity.ok(vnPayService.cancelPay());

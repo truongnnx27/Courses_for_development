@@ -12,7 +12,11 @@ import com.example.coursefordevelopment.service.EmailService;
 import com.example.coursefordevelopment.service.VNPayService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,19 +25,20 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
-
 @Service
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@RequiredArgsConstructor
 public class VNPayServiceImpl implements VNPayService {
-    private String transactionId; // Biến để lưu transaction ID
-    @Autowired
+    public static String transactionId;
+
     private UserRepository userRepository;
-    @Autowired
+
     private PaymentRepository paymentRepository;
-    @Autowired
+
     private CourseRepository courseRepository;
-    @Autowired
+
     private PaymentStatusRepository paymentStatusRepository;
-    @Autowired
+
     private EmailService emailService;
     @Override
     public String createOrder(int total, String orderInfo, String urlReturn) {
@@ -46,12 +51,13 @@ public class VNPayServiceImpl implements VNPayService {
 
         // Lưu mã giao dịch vào biến transactionId
         this.transactionId = vnp_TxnRef;
-
+        // Chuyển đổi USD sang VND và nhân với 100
+        int amountInVND = total * 25000; // Quy đổi từ USD sang VND
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
         vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
-        vnp_Params.put("vnp_Amount", String.valueOf(total * 100)); // VNPay yêu cầu số tiền theo đơn vị VND
+        vnp_Params.put("vnp_Amount", String.valueOf(amountInVND * 100));
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", orderInfo);
@@ -170,7 +176,7 @@ public class VNPayServiceImpl implements VNPayService {
     }
 
     private String buildSuccessUrl(Long courseId, String userId) {
-        return String.format("http://localhost:8081/api/payments/vnpay/success?courseId=%d&userId=%s", courseId, userId);
+        return String.format("http://localhost:8080/api/payments/vnpay/success?courseId=%d&userId=%s", courseId, userId);
     }
 
     private PaymentDto createNewPaymentDTO(Integer price, String userId, Long courseId) {
@@ -179,8 +185,8 @@ public class VNPayServiceImpl implements VNPayService {
         paymentDto.setPaymentDate(LocalDateTime.now());
         paymentDto.setUserId(userId);
         paymentDto.setCourseId(courseId);
-        paymentDto.setPaymentStatusId(1L); // ID 1 cho trạng thái PENDING
-        paymentDto.setEnrollment(true);
+        paymentDto.setPaymentStatusId(3L); // ID 3cho trạng thái PENDING
+        paymentDto.setEnrollment(false); // sửa
         return paymentDto;
     }
 
@@ -193,45 +199,66 @@ public class VNPayServiceImpl implements VNPayService {
         String vnp_ResponseCode = request.getParameter("vnp_ResponseCode");
         String vnp_Amount = request.getParameter("vnp_Amount");
 
-        Payment existingPayment = paymentRepository.findByPaymentId(transactionNo)
-                .orElseThrow(() -> new RuntimeException("Payment not found for transactionNo: " + transactionNo));
+        // Chuyển đổi từ VND sang USD
+        double amountInVND = Double.parseDouble(vnp_Amount); // Số tiền thanh toán bằng VND
+        double exchangeRate = 25000; // Tỷ giá VND -> USD (Ví dụ: 25,000 VND = 1 USD)
+        double amountInUSD = amountInVND / exchangeRate; // Quy đổi ra USD
 
+        Payment existingPayment = paymentRepository.findByPaymentId(transactionNo)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thanh toán cho transactionNo: " + transactionNo));
+
+        // Cập nhật trạng thái thanh toán
         if ("00".equals(vnp_ResponseCode)) {
-            updatePaymentStatus(existingPayment, vnp_Amount, 2L); // ID 2 cho COMPLETED
+            updatePaymentStatus(existingPayment, vnp_Amount, 1L); // ID 1 cho COMPLETED
         } else {
-            updatePaymentStatus(existingPayment, vnp_Amount, 3L); // ID 3 cho FAILED
+            updatePaymentStatus(existingPayment, vnp_Amount, 2L); // ID 2 cho FAILED
         }
 
+        // Gửi email xác nhận nếu thanh toán thành công
         if ("00".equals(vnp_ResponseCode)) {
             String emailAddress = getUserEmailById(existingPayment.getUser().getId());
-            String subject = "Payment Confirmation";
-            String body = buildEmailBody(transactionNo, vnp_Amount);
-
+            String subject = "Payment confirmation";
+            String body = buildEmailBody(transactionNo, amountInUSD); // Truyền số tiền USD vào email body
             emailService.sendEmail(emailAddress, subject, body);
         }
     }
 
-    private String buildEmailBody(String transactionNo, String vnp_Amount) {
+    private String buildEmailBody(String transactionNo, double amountInUSD) {
+        // Định dạng lại số tiền để hiển thị chính xác 2 chữ số sau dấu phẩy
+        String formattedAmount = String.format("%.2f", amountInUSD);
+
         return "<html><head><title>Payment Confirmation</title></head><body>"
                 + "<h1>Payment Confirmation</h1>"
                 + "<p>Your payment has been successfully processed.</p>"
                 + "<ul>"
                 + "<li><strong>Transaction Number:</strong> " + transactionNo + "</li>"
-                + "<li><strong>Amount:</strong> " + vnp_Amount + " VND</li>"
+                + "<li><strong>Amount:</strong> " + formattedAmount + " USD</li>" // Hiển thị số tiền đã định dạng
                 + "</ul>"
                 + "</body></html>";
     }
-
     private String getUserEmailById(String userId) {
         return userRepository.findEmailById(userId);
     }
 
     private void updatePaymentStatus(Payment payment, String vnp_Amount, Long statusId) {
-        payment.setPaymentStatus(paymentStatusRepository.findById(statusId).orElseThrow(() -> new RuntimeException("Payment status not found")));
-        payment.setPrice(BigDecimal.valueOf(Long.parseLong(vnp_Amount)));
+        // Cập nhật trạng thái thanh toán
+        payment.setPaymentStatus(paymentStatusRepository.findById(statusId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy trạng thái thanh toán")));
+        // Lưu lại thông tin thanh toán vào database
+        payment.setEnrollment(false);
         paymentRepository.save(payment);
     }
 
+    @Scheduled(fixedRate = 60000) // Kiểm tra mỗi 1 phút
+    public void checkPendingPayments() {
+        List<Payment> pendingPayments = paymentRepository.findAllByPaymentStatusId(3L); // ID 3 cho trạng thái PENDING
+        for (Payment payment : pendingPayments) {
+            // Kiểm tra thời gian tạo thanh toán, nếu đã quá 1 phút thì cập nhật thành FAILED
+            if (payment.getPaymentDate().isBefore(LocalDateTime.now().minusMinutes(2))) {
+                updatePaymentStatus(payment, payment.getPrice().toString(), 2L); // Cập nhật thành FAILED
+            }
+        }
+    }
     @Override
     public String cancelPay() {
         return "Payment was canceled.";

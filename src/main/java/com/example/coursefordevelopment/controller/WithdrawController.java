@@ -1,10 +1,15 @@
 package com.example.coursefordevelopment.controller;
 
+import com.example.coursefordevelopment.dto.WithdrawDto;
 import com.example.coursefordevelopment.service.WithdrawService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/withdraw")
@@ -13,13 +18,47 @@ public class WithdrawController {
     @Autowired
     private WithdrawService withdrawService;
 
+    // API tạo yêu cầu rút tiền
     @PostMapping("/request")
-    public String requestWithdraw(@RequestParam BigDecimal amount, @RequestParam String userId) {
-        return withdrawService.initiateWithdraw(amount, userId);
+    public ResponseEntity<?> requestWithdraw(
+            @RequestParam("userId") String userId,
+            @RequestParam("price") BigDecimal amount) {
+        try {
+            WithdrawDto withdrawDto = withdrawService.requestWithdraw(userId, amount);
+            return ResponseEntity.ok(withdrawDto);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Đã xảy ra lỗi không mong muốn.");
+        }
     }
 
-    @GetMapping("/verify")
-    public String verifyWithdrawal(@RequestParam("token") String token) {
-        return withdrawService.verifyWithdrawal(token);
+    // API tính tổng số tiền
+    @GetMapping("/total-payments/{userId}")
+    public ResponseEntity<?> getTotalPayments(@PathVariable("userId") String userId) {
+        try {
+            BigDecimal totalPayments = withdrawService.calculateTotalPayments(userId);
+            return ResponseEntity.ok(totalPayments);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("UserId không tồn tại.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Đã xảy ra lỗi không mong muốn.");
+        }
+    }
+
+    // API lấy lịch sử rút tiền
+    @GetMapping("/history/{userId}")
+    public List<WithdrawDto> getWithdrawalHistory(@PathVariable String userId) {
+        return withdrawService.getWithdrawalHistory(userId);
+    }
+
+    // Endpoint xác thực OTP
+    @PostMapping("/confirm")
+    public ResponseEntity<String> confirmWithdraw(@RequestParam Long withdrawId, @RequestParam String otp) {
+        // Gọi service để xác thực yêu cầu rút tiền
+        withdrawService.confirmWithdraw(withdrawId, otp);
+        return ResponseEntity.ok("Withdraw confirmed");
     }
 }
+
+

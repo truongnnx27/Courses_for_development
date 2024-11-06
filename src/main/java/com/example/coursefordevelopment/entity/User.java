@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -54,10 +55,14 @@ public class User {
 
     @Column(name = "created_date")
     LocalDateTime createdDate;
+    private BigDecimal price = BigDecimal.ZERO;
+    @Column(name = "admin_profit")
+    private BigDecimal adminProfit = BigDecimal.ZERO; // Khởi tạo giá trị mặc định
 
     @Version
     @Column(name = "version")
     int version;
+
 
     @Column(name = "is_active", length = 255)
     private String isActive;
@@ -68,6 +73,5 @@ public class User {
 
     @OneToMany(mappedBy = "instructor")
     private List<Course> courses;
-
 
 }
